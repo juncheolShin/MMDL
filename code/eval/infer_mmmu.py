@@ -1,8 +1,9 @@
 """Run a Qwen3-VL model on MMMU with vLLM, using the official Qwen3-VL prompt: r_n = f_theta(p(q_n, i_n)).
 
-Writes runs/<run-name>/predictions.jsonl and run_config.json. Scoring is done by score_mmmu.py.
+Writes results/<run-name>/run_config.json and predictions.jsonl (git-ignored: it embeds the MMMU questions).
+Scoring is done by score_mmmu.py.
 
-    python eval/infer_mmmu.py --model models/Qwen3-VL-4B-Instruct --run-name base_greedy --decoding greedy
+    python code/eval/infer_mmmu.py --model models/Qwen3-VL-4B-Instruct --run-name base_greedy --decoding greedy
 """
 import argparse
 import json
@@ -43,7 +44,7 @@ def parse_args():
     ap.add_argument('--tensor-parallel-size', type=int, default=1)
     ap.add_argument('--max-images-per-prompt', type=int, default=10)
     ap.add_argument('--seed', type=int, default=42)
-    ap.add_argument('--out-root', default=str(mmmu_data.ROOT / 'runs'))
+    ap.add_argument('--out-root', default=str(mmmu_data.RESULTS_DIR))
     ap.add_argument('--overwrite', action='store_true')
     return ap.parse_args()
 
@@ -133,11 +134,11 @@ def main():
     config = {
         'run_name': args.run_name,
         'created_utc': datetime.now(timezone.utc).isoformat(timespec='seconds'),
-        'argv': sys.argv,
-        'args': vars(args),
+        'argv': [mmmu_data.repo_relative(a) for a in sys.argv],
+        'args': {k: mmmu_data.repo_relative(v) if isinstance(v, str) else v for k, v in vars(args).items()},
         'decoding_preset': args.decoding,
         'sampling_params': {**sampling, 'max_tokens': args.max_new_tokens},
-        'llm_kwargs': llm_kwargs,
+        'llm_kwargs': {**llm_kwargs, 'model': mmmu_data.repo_relative(args.model)},
         'n_samples': len(rows),
         'generation_seconds': round(gen_seconds, 1),
         'model_fingerprint_sha256': model_fingerprint(args.model),

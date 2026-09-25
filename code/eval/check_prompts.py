@@ -2,7 +2,7 @@
 the model (processor only, CPU). Use it to check the prompt function p and that
 max_model_len >= longest prompt + max_new_tokens.
 
-    CUDA_VISIBLE_DEVICES= python eval/check_prompts.py --model models/Qwen3-VL-4B-Instruct --show validation_Art_8
+    CUDA_VISIBLE_DEVICES= python code/eval/check_prompts.py --model models/Qwen3-VL-4B-Instruct --show validation_Art_8
 """
 import argparse
 import csv
@@ -26,7 +26,7 @@ def main():
     ap.add_argument('--show', nargs='*', default=['validation_Art_8'], help='ids whose rendered prompt is printed')
     ap.add_argument('--max-model-len', type=int, default=40960)
     ap.add_argument('--max-new-tokens', type=int, default=32768)
-    ap.add_argument('--out', default=str(mmmu_data.ROOT / 'runs' / 'prompt_check' / 'prompt_tokens.csv'))
+    ap.add_argument('--out', default=str(mmmu_data.RESULTS_DIR / 'prompt_check' / 'prompt_tokens.csv'))
     args = ap.parse_args()
 
     from run_mmmu import build_mmmu_prompt, prepare_inputs_for_vllm

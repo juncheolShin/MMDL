@@ -1,4 +1,4 @@
-"""Score runs/<run>/predictions.jsonl: s = (1/N) sum_n g(r_gt,n, r̂_n), g = exact match after normalization.
+"""Score results/<run>/predictions.jsonl: s = (1/N) sum_n g(r_gt,n, r̂_n), g = exact match after normalization.
 
 Two extractors turn each response r_n into r̂_n:
   structured  answer_extraction.py (primary). Reads the response's final answer statement, so long
@@ -9,7 +9,7 @@ Two extractors turn each response r_n into r̂_n:
 Writes scores.json, per_sample.csv and mc_disagreements.csv (MC items where the two extractors differ,
 for manual auditing).
 
-    python eval/score_mmmu.py runs/base_greedy
+    python code/eval/score_mmmu.py results/base_greedy
 """
 import argparse
 import collections

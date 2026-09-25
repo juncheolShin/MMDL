@@ -12,10 +12,12 @@ from pathlib import Path
 
 import pandas as pd
 
-ROOT = Path(__file__).resolve().parents[1]
-DATA_DIR = ROOT / 'data'
-QWEN_DIR = ROOT / 'third_party' / 'qwen3vl_mmmu'
-MMMU_OFFICIAL_DIR = ROOT / 'third_party' / 'mmmu_official'
+CODE_DIR = Path(__file__).resolve().parents[1]
+REPO_ROOT = CODE_DIR.parent
+DATA_DIR = REPO_ROOT / 'data'
+RESULTS_DIR = REPO_ROOT / 'results'
+QWEN_DIR = CODE_DIR / 'third_party' / 'qwen3vl_mmmu'
+MMMU_OFFICIAL_DIR = CODE_DIR / 'third_party' / 'mmmu_official'
 TSV_PATH = DATA_DIR / 'MMMU_DEV_VAL.tsv'
 ANSWER_DICT_PATH = DATA_DIR / 'mmmu_answer_dict_val.json'
 IMAGE_ROOT = DATA_DIR / 'images' / 'MMMU'
@@ -90,5 +92,10 @@ def load_mmmu_official(name):
 
 
 def vendored_digests():
-    files = sorted((ROOT / 'third_party').glob('*/*.py')) + [TSV_PATH, ANSWER_DICT_PATH]
-    return {str(p.relative_to(ROOT)): file_digest(p) for p in files}
+    files = sorted((CODE_DIR / 'third_party').glob('*/*.py')) + [TSV_PATH, ANSWER_DICT_PATH]
+    return {str(p.relative_to(REPO_ROOT)): file_digest(p) for p in files}
+
+
+def repo_relative(value):
+    """Strip this checkout's absolute path so run_config.json can be committed to the public repo."""
+    return str(value).replace(str(REPO_ROOT) + os.sep, '')
