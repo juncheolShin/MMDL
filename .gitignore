@@ -1,0 +1,12 @@
+# Fetched by scripts/fetch_assets.sh (MMMU data must never be used for training; keep it out of git)
+data/
+models/
+
+# Run outputs and logs
+runs/
+logs/
+
+__pycache__/
+*.pyc
+.pytest_cache/
+*.part
