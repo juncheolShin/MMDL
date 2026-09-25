@@ -1,4 +1,4 @@
-"""Response-format cases for answer_extraction. Run: python eval/tests/test_answer_extraction.py (or pytest)."""
+"""Response-format cases for answer_extraction. Run: python code/eval/tests/test_answer_extraction.py (or pytest)."""
 import sys
 from pathlib import Path
 

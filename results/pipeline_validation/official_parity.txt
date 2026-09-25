@@ -1,0 +1,9 @@
+MMMU-Benchmark/MMMU@268471d example_outputs/llava1.5_13b: 900 val responses
+official script accuracy        0.3667
+score_mmmu.py official accuracy 0.3667
+verdict mismatches (excluding 2 random guesses): 0 []
+random guesses with a different verdict (RNG order): 0
+MC letters, structured vs official (official not guessing): 844/845 identical
+  validation_Pharmacy_27: structured=None (unparsed), official=D, response='(A) 20.0%,0.50 mol,0.05 mol,20.0%\n(B) 30.0%,0.50 mol,0.05 mol,20.0%\n(C'
+open questions correct: structured 2/53, official 2/53
+overall accuracy: structured 0.3656, official 0.3667

@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
-# Download the MMMU val data and Qwen3-VL-4B-Instruct at pinned versions into data/ and models/,
+# Download the MMMU val data and Qwen3-VL-4B-Instruct at pinned versions into <repo>/data and <repo>/models,
 # verifying every file's SHA-256. Safe to re-run: files that already verify are skipped.
 set -euo pipefail
-ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 
 fetch() {  # fetch <url> <dest> <sha256> [extra curl args]
   local url=$1 dest=$2 sum=$3

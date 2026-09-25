@@ -1,6 +1,6 @@
 # Vendored evaluation code
 
-These files are unmodified copies of upstream code. `eval/` imports them instead of reimplementing them,
+These files are unmodified copies of upstream code. `code/eval/` imports them instead of reimplementing them,
 so the prompt and parsers stay identical to what the upstream authors used.
 
 | Directory | Upstream | Commit | Files | License |
@@ -22,7 +22,7 @@ so the prompt and parsers stay identical to what the upstream authors used.
 The Qwen3-VL repo pins the MD5 of `MMMU_DEV_VAL.tsv` as `521afc0f3bf341e6654327792781644d`. The file currently served at
 `https://opencompass.openxlab.space/utils/VLMEval/MMMU_DEV_VAL.tsv` has MD5 `585e8ad75e73f75dcad265dfd0417d64`,
 which is the value VLMEvalKit lists today in `vlmeval/dataset/image_mcq.py`. Qwen's loader re-downloads the file whenever the MD5 does not match,
-so running their code also ends up using this file. `eval/mmmu_data.py` checks for the VLMEvalKit MD5.
+so running their code also ends up using this file. `code/eval/mmmu_data.py` checks for the VLMEvalKit MD5.
 (The server's TLS certificate had expired on 2026-09-24. The file was downloaded with `curl -k`, and its MD5 was then checked against the VLMEvalKit value.)
 
 ## One deliberate deviation from Qwen's loader
@@ -30,5 +30,5 @@ so running their code also ends up using this file. `eval/mmmu_data.py` checks f
 `pd.read_csv` with default settings reads the option text `None` as NaN. In MMMU val this affects one cell:
 `validation_Geography_15` option D = "None", **which is also the ground-truth answer**. With Qwen's code, option D
 disappears from the prompt and from the option list the parsers see, so the question cannot be answered correctly.
-`eval/mmmu_data.py` puts back any option cell that is non-empty in the file, and `run_config.json` records
+`code/eval/mmmu_data.py` puts back any option cell that is non-empty in the file, and `run_config.json` records
 which cells were restored (`restored_option_cells`).
