@@ -1,0 +1,29 @@
+# Copy this file for a new experiment. Paths and run names stay on the command line.
+[evaluation]
+temperature = 0.0
+top_p = 0.8
+top_k = 20
+repetition_penalty = 1.0
+presence_penalty = 1.5
+seed = 0
+max_new_tokens = 512
+max_model_len = 8192
+min_pixels = 262144
+max_pixels = 2097152
+gpu_memory_utilization = 0.85
+max_num_seqs = 2
+tensor_parallel_size = 1
+max_images_per_prompt = 10
+
+[training]
+epochs = 1.0
+learning_rate = 0.0001
+gradient_accumulation_steps = 8
+per_device_train_batch_size = 1
+lora_r = 8
+lora_alpha = 16
+lora_dropout = 0.0
+max_steps = -1
+min_pixels = 65536
+max_pixels = 524288
+model_max_length = 2048

@@ -1,6 +1,8 @@
 # Fetched by code/scripts/fetch_assets.sh (MMMU data must never be used for training; keep it out of git)
 data/
 models/
+training_data/
+checkpoints/
 
 # Full model outputs embed the MMMU questions; commit the other files in results/<run>/
 results/*/predictions.jsonl
