@@ -13,8 +13,8 @@ ENV PATH="/opt/venv/bin:${PATH}" \
     HF_HOME=/opt/hf-cache
 
 COPY code/requirements-eval.txt code/requirements-train.txt /tmp/
-RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir -r /tmp/requirements-eval.txt -r /tmp/requirements-train.txt
+RUN pip install  --upgrade pip && \
+    pip install  -r /tmp/requirements-eval.txt -r /tmp/requirements-train.txt
 
 # Qwen's official multimodal SFT trainer, fixed to the same upstream commit as
 # the vendored MMMU evaluation code. The local wrapper selects SDPA for 4090.
