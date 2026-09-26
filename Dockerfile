@@ -37,5 +37,19 @@ RUN python -m compileall -q code && \
     python code/eval/tests/test_configuration.py && \
     python code/eval/tests/test_prompting.py && \
     python code/eval/tests/test_answer_extraction.py
+
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    python3 \
+    python3-dev \
+    python3-venv \
+    python3-pip \
+    git \
+    curl \
+    ca-certificates \
+    libglib2.0-0 \
+    libgl1 \
+    && rm -rf /var/lib/apt/lists/*
+
 ENV HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1
 CMD ["bash"]
