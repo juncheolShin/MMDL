@@ -8,11 +8,15 @@ import argparse
 import csv
 import re
 import statistics
+import sys
 from pathlib import Path
 
 from tqdm import tqdm
 
 import mmmu_data
+from prompting import build_mmmu_prompt
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from configuration import DEFAULT_CONFIG, EVALUATION_TYPES, load_section  # noqa: E402
 
 
 def collapse_image_pads(prompt):
@@ -22,21 +26,25 @@ def collapse_image_pads(prompt):
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument('--model', required=True)
+    ap.add_argument('--config', type=Path, default=DEFAULT_CONFIG)
+    ap.add_argument('--data-root', default=str(mmmu_data.DATA_DIR))
     ap.add_argument('--split', default='validation')
     ap.add_argument('--show', nargs='*', default=['validation_Art_8'], help='ids whose rendered prompt is printed')
-    ap.add_argument('--max-model-len', type=int, default=40960)
-    ap.add_argument('--max-new-tokens', type=int, default=32768)
     ap.add_argument('--out', default=str(mmmu_data.RESULTS_DIR / 'prompt_check' / 'prompt_tokens.csv'))
     args = ap.parse_args()
+    for key, value in load_section(args.config, 'evaluation', EVALUATION_TYPES).items():
+        setattr(args, key, value)
+    mmmu_data.configure_data_root(args.data_root)
 
-    from run_mmmu import build_mmmu_prompt, prepare_inputs_for_vllm
+    from run_mmmu import prepare_inputs_for_vllm
     from transformers import AutoProcessor
 
     processor = AutoProcessor.from_pretrained(args.model)
     data = mmmu_data.load_mmmu(args.split)
     rows = []
     for _, line in tqdm(data.iterrows(), total=len(data), desc='rendering'):
-        messages = build_mmmu_prompt(line, mmmu_data.dump_image, 'MMMU_DEV_VAL')
+        messages = build_mmmu_prompt(
+            line, mmmu_data.dump_image, args.min_pixels, args.max_pixels)
         inp = prepare_inputs_for_vllm(messages, processor)
         images = inp['multi_modal_data'].get('image')
         enc = processor(text=[inp['prompt']], images=images, return_tensors='pt')

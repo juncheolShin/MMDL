@@ -4,7 +4,7 @@
 
 | 경로 | 만드는 코드 | 내용 |
 |---|---|---|
-| `<run-name>/run_config.json` | `code/eval/infer_mmmu.py` | 실험 설정: 모델·체크포인트 해시, 데이터·공식 코드 해시, 디코딩, 패키지 버전, seed |
+| `<run-name>/run_config.json` | `code/eval/infer_mmmu.py` | 실험 설정: 모델·체크포인트 해시, 데이터·공식 코드 해시, 실제 파라미터, TOML 설정 해시, 패키지 버전, seed |
 | `<run-name>/scores.json` | `code/eval/score_mmmu.py` | 정확도(전체, 객관식, 주관식, 분야별, 과목별), unparsed 건수, 추출 규칙별 건수 |
 | `<run-name>/per_sample.csv` | `code/eval/score_mmmu.py` | 문항별 정답, 추출된 답, 추출 규칙, 정오 (error analysis용) |
 | `<run-name>/mc_disagreements.csv` | `code/eval/score_mmmu.py` | 두 추출기가 다르게 읽은 객관식 문항과 응답 원문 (추출기 감사용) |
@@ -12,18 +12,18 @@
 | `prompt_check/prompt_tokens.csv` | `code/eval/check_prompts.py` | 문항별 이미지 크기와 프롬프트 토큰 수 |
 | `pipeline_validation/official_parity.txt` | `code/eval/tests/check_official_parity.py` | MMMU 공식 스크립트와의 대조 결과 |
 
-## 평가 설정 (모든 run 공통, 고정)
+## 기준 평가 설정 (`configs/rtx4090.toml`)
 
 | 항목 | 값 |
 |---|---|
 | Base model | `Qwen/Qwen3-VL-4B-Instruct` @ `ebb281ec70b05090aa6165b016eac8ec08e71b17` |
 | 평가 데이터 | MMMU val 900문항 (객관식 847, 주관식 53). VLMEvalKit `MMMU_DEV_VAL.tsv`(MD5 `585e8ad7…`), 정답은 `MMMU-Benchmark/MMMU@268471d`의 `answer_dict_val.json` |
-| 프롬프트 p | Qwen3-VL 공식 `evaluation/mmmu`의 `build_mmmu_prompt`를 그대로 사용(강의 p.10과 동일). 모델 chat template(ChatML)을 적용하고 이미지를 텍스트 앞에 둠. 이미지는 1.0M–4.0M 픽셀로 조정 |
-| 디코딩 | `greedy`(temperature 0, 실험 비교용) / `qwen_official`(T=0.7, top-p 0.8, top-k 20, presence 1.5; Qwen 보고 수치 재현용). 둘은 temperature만 다름 |
-| 생성 길이 | `max_new_tokens` 32768, `max_model_len` 40960, vLLM seed 42 |
+| 프롬프트 p | 2026-09-25 회의 합의안: 객관식은 `Question/Options` 뒤 한 글자 답 지시, 주관식은 마지막 `Final answer:` 줄 지시. 모델 chat template을 적용하고 이미지를 텍스트 앞에 둠. 이미지는 262,144–2,097,152픽셀로 조정 |
+| 디코딩 | `greedy`(temperature 0, 실험 비교용) / `qwen_official`(T=0.7, top-p 0.8, top-k 20, presence 1.5; 별도 비교용). 기본은 greedy |
+| 생성 길이 | `max_new_tokens` 512, `max_model_len` 8192, vLLM seed 0, `max_num_seqs` 2, GPU 메모리 사용 목표 0.85 |
 | 채점 g | **structured**(주 지표): 최종 답 선언을 읽고, 무작위 추측 없이 정규화 후 exact match. **official**(참고): MMMU 공식 파서 |
 
-Fine-tuned 체크포인트도 위 설정 그대로 평가합니다(`--model`만 바꿈). 평가 설정을 바꾸면 기존 run들과 비교할 수 없으므로, 바꿀 때는 이 표와 모든 기준선을 함께 다시 만듭니다.
+Fine-tuned 체크포인트도 위 설정 그대로 평가합니다(`MODEL_PATH`만 바꿈). 파라미터를 바꾸는 실험은 TOML을 복사해 이름을 바꾸고, 해당 설정의 baseline도 다시 측정합니다. 각 run의 설정 값과 파일 해시는 `run_config.json`에 남습니다.
 
 ## 실험 기록 (MMMU val)
 
@@ -41,8 +41,8 @@ Fine-tuned 체크포인트도 위 설정 그대로 평가합니다(`--model`만 
 - 짧은 응답에서 structured와 official이 같은 선택지를 읽었습니다(844/845). 나머지 1건은 선택지 목록을 따라 쓴 무응답입니다. official은 D로 읽었고 structured는 unparsed로 처리했습니다.
 - 긴 설명형 응답에서의 정확성은 실제 Qwen3-VL 출력으로 `mc_disagreements.csv`를 감사해서 확인해야 합니다.
 
-**프롬프트** (`prompt_check/prompt_tokens.csv`)
-- `validation_Art_8`을 렌더링한 결과가 강의 p.10 query와 글자 단위로 일치합니다.
+**이전 프롬프트 검증 기록** (`prompt_check/prompt_tokens.csv`, Qwen 원본 프롬프트·해상도 설정에서 측정)
+- `validation_Art_8`을 렌더링한 결과가 강의 p.10 query와 글자 단위로 일치했습니다. 현재 합의안 프롬프트의 결과는 아닙니다.
 - 이미지 토큰 수는 900문항 모두 (W/32)×(H/32)와 일치합니다. 이미지 982장 중 884장이 1.0M 픽셀까지 확대됩니다(원본 중앙값 약 0.2M 픽셀).
 
 | 문항당 이미지 수 | 문항 수 | 프롬프트 토큰 중앙값 | 최대 |
@@ -53,6 +53,6 @@ Fine-tuned 체크포인트도 위 설정 그대로 평가합니다(`--model`만 
 | 4 | 8 | 4,130 | 4,214 |
 | 5 | 6 | 5,150 | 5,184 |
 
-최장 프롬프트(5,627)에 출력 한도(32,768)를 더해도 `max_model_len` 40,960 안에 들어갑니다.
+새 프롬프트·이미지 면적 설정과 생성 한도(512)에서는 `check_prompts.py`로 토큰 길이를 다시 측정해야 합니다. 위 표는 기존 원본 설정의 기록이며 새 설정의 실측 결과로 간주하지 않습니다.
 
 **데이터 수정**: pandas가 `validation_Geography_15`의 선택지 D `"None"`(정답)을 결측값으로 읽습니다. 그래서 원본 Qwen 코드에서는 이 문항이 프롬프트에서 정답 선택지를 잃습니다. 로더에서 원래 값으로 복원하고 `run_config.json`에 기록합니다(`code/third_party/SOURCES.md`).

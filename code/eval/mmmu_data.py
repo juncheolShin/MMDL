@@ -1,7 +1,7 @@
 """Load MMMU_DEV_VAL.tsv and the vendored upstream modules.
 
-The TSV is loaded with Qwen3-VL's own `dataset_utils.load_dataset`, so every row matches what
-their evaluation code feeds to `build_mmmu_prompt`.
+The TSV is loaded with Qwen3-VL's own `dataset_utils.load_dataset`, preserving the
+official row preprocessing. The active prompt is defined in prompting.py.
 """
 import hashlib
 import importlib.util
@@ -21,6 +21,16 @@ MMMU_OFFICIAL_DIR = CODE_DIR / 'third_party' / 'mmmu_official'
 TSV_PATH = DATA_DIR / 'MMMU_DEV_VAL.tsv'
 ANSWER_DICT_PATH = DATA_DIR / 'mmmu_answer_dict_val.json'
 IMAGE_ROOT = DATA_DIR / 'images' / 'MMMU'
+
+
+def configure_data_root(path):
+    """Point all evaluation inputs at an explicit, portable data directory."""
+    global DATA_DIR, TSV_PATH, ANSWER_DICT_PATH, IMAGE_ROOT
+    DATA_DIR = Path(path).expanduser().resolve()
+    TSV_PATH = DATA_DIR / 'MMMU_DEV_VAL.tsv'
+    ANSWER_DICT_PATH = DATA_DIR / 'mmmu_answer_dict_val.json'
+    IMAGE_ROOT = DATA_DIR / 'images' / 'MMMU'
+
 
 # See third_party/SOURCES.md: Qwen pins an older MD5; this is the file VLMEvalKit serves today.
 VLMEVALKIT_TSV_MD5 = '585e8ad75e73f75dcad265dfd0417d64'

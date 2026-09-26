@@ -105,7 +105,9 @@ def score_official(preds, answers, options_by_id):
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument('run_dir')
+    ap.add_argument('--data-root', default=str(mmmu_data.DATA_DIR))
     args = ap.parse_args()
+    mmmu_data.configure_data_root(args.data_root)
     run_dir = Path(args.run_dir)
 
     preds = [json.loads(l) for l in open(run_dir / 'predictions.jsonl')]

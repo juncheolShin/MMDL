@@ -12,7 +12,7 @@ so the prompt and parsers stay identical to what the upstream authors used.
 
 ## Where each file is used
 
-- `qwen3vl_mmmu/run_mmmu.py`: `build_mmmu_prompt` (the prompt function *p*) and `prepare_inputs_for_vllm`. It applies the chat template and uses `qwen_vl_utils` to resize images. The prompt shown on p.10 of the lecture comes from here.
+- `qwen3vl_mmmu/run_mmmu.py`: `prepare_inputs_for_vllm` applies the chat template and uses `qwen_vl_utils` to resize images. Its `build_mmmu_prompt` remains unmodified as a reference; the active prompt is the 2026-09-25 team agreement in `code/eval/prompting.py`.
 - `qwen3vl_mmmu/dataset_utils.py`: loads the TSV, dumps the images and runs `MMMU_preproc`.
 - `qwen3vl_mmmu/eval_utils.py`: the rule-based extractor `can_infer` (the VLMEvalKit rule stage). The GPT-judge fallback is not used here because it needs a DashScope or OpenAI API key.
 - `mmmu_official/eval_utils.py`: the benchmark's official parser (`parse_multi_choice_response` and `parse_open_response`) and scorer (`evaluate` and `calculate_ins_level_acc`).

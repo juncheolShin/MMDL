@@ -1,0 +1,10 @@
+.git
+data
+models
+checkpoints
+training_data
+logs
+**/__pycache__
+**/*.pyc
+**/*.part
+results/*/predictions.jsonl
