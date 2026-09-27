@@ -1,17 +1,17 @@
-# Fetched by code/scripts/fetch_assets.sh (MMMU data must never be used for training; keep it out of git)
+# Downloaded assets and local training data/checkpoints.
 data/
 models/
 training_data/
 checkpoints/
 
-# Full model outputs embed the MMMU questions; commit the other files in results/<run>/
-results/*/predictions.jsonl
+# Evaluation outputs stay local.
+results/
 
 logs/
+_workspace/
 __pycache__/
 *.pyc
 .pytest_cache/
 *.part
 
-results/
 base_greed*

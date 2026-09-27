@@ -1,111 +1,219 @@
-"""Load MMMU_DEV_VAL.tsv and the vendored upstream modules.
-
-The TSV is loaded with Qwen3-VL's own `dataset_utils.load_dataset`, preserving the
-official row preprocessing. The active prompt is defined in prompting.py.
-"""
-import hashlib
-import importlib.util
+"""Load all 30 MMMU validation configurations at the assignment revision."""
+import ast
+import io
+import math
 import os
+import re
 import string
-import sys
 from pathlib import Path
 
 import pandas as pd
 
-CODE_DIR = Path(__file__).resolve().parents[1]
-REPO_ROOT = CODE_DIR.parent
-DATA_DIR = REPO_ROOT / 'data'
+
+REPO_ROOT = Path(__file__).resolve().parents[2]
+DATA_DIR = Path(os.environ.get('DATA_PATH', REPO_ROOT / 'data'))
 RESULTS_DIR = REPO_ROOT / 'results'
-QWEN_DIR = CODE_DIR / 'third_party' / 'qwen3vl_mmmu'
-MMMU_OFFICIAL_DIR = CODE_DIR / 'third_party' / 'mmmu_official'
-TSV_PATH = DATA_DIR / 'MMMU_DEV_VAL.tsv'
-ANSWER_DICT_PATH = DATA_DIR / 'mmmu_answer_dict_val.json'
-IMAGE_ROOT = DATA_DIR / 'images' / 'MMMU'
+
+HF_REPO_ID = 'MMMU/MMMU'
+HF_REVISION = '98e6ac0cb9b7b2cd2c991b85a50762edc4aedc68'
+SUBJECTS = (
+    'Accounting', 'Agriculture', 'Architecture_and_Engineering', 'Art', 'Art_Theory',
+    'Basic_Medical_Science', 'Biology', 'Chemistry', 'Clinical_Medicine',
+    'Computer_Science', 'Design', 'Diagnostics_and_Laboratory_Medicine', 'Economics',
+    'Electronics', 'Energy_and_Power', 'Finance', 'Geography', 'History', 'Literature',
+    'Manage', 'Marketing', 'Materials', 'Math', 'Mechanical_Engineering', 'Music',
+    'Pharmacy', 'Physics', 'Psychology', 'Public_Health', 'Sociology',
+)
+N_PER_SUBJECT = 30
+IMAGE_COLUMNS = tuple(f'image_{n}' for n in range(1, 8))
+OPTION_COLUMNS = tuple(string.ascii_uppercase)
+DATA_COLUMNS = (
+    'id', 'index', 'split', 'question_type', 'question', 'answer',
+    *OPTION_COLUMNS, *IMAGE_COLUMNS,
+)
 
 
-def configure_data_root(path):
-    """Point all evaluation inputs at an explicit, portable data directory."""
-    global DATA_DIR, TSV_PATH, ANSWER_DICT_PATH, IMAGE_ROOT
-    DATA_DIR = Path(path).expanduser().resolve()
-    TSV_PATH = DATA_DIR / 'MMMU_DEV_VAL.tsv'
-    ANSWER_DICT_PATH = DATA_DIR / 'mmmu_answer_dict_val.json'
-    IMAGE_ROOT = DATA_DIR / 'images' / 'MMMU'
+def _is_missing(value):
+    if value is None:
+        return True
+    if isinstance(value, str) and not value.strip():
+        return True
+    if isinstance(value, float):
+        return math.isnan(value)
+    return False
 
 
-# See third_party/SOURCES.md: Qwen pins an older MD5; this is the file VLMEvalKit serves today.
-VLMEVALKIT_TSV_MD5 = '585e8ad75e73f75dcad265dfd0417d64'
+def _parse_options(raw, sample_id):
+    """Return an ordered letter-to-text map without evaluating arbitrary code."""
+    if _is_missing(raw):
+        return {}
+    if isinstance(raw, str):
+        try:
+            raw = ast.literal_eval(raw)
+        except (SyntaxError, ValueError) as exc:
+            raise ValueError(f'cannot parse HF options for {sample_id}: {raw!r}') from exc
 
-# Qwen's modules use flat imports (`from common_utils import ...`), so their directory goes on sys.path.
-if str(QWEN_DIR) not in sys.path:
-    sys.path.insert(0, str(QWEN_DIR))
+    parsed = {}
+    if isinstance(raw, dict):
+        entries = list(raw.items())
+        # Preserve letter keys; otherwise use the dataset's mapping iteration order.
+        explicit = all(str(key).strip().upper() in OPTION_COLUMNS for key, _ in entries)
+        if explicit:
+            entries.sort(key=lambda item: OPTION_COLUMNS.index(str(item[0]).strip().upper()))
+        for position, (key, value) in enumerate(entries):
+            if position >= len(OPTION_COLUMNS):
+                raise ValueError(f'too many HF options for {sample_id}: {len(entries)}')
+            letter = str(key).strip().upper() if explicit else OPTION_COLUMNS[position]
+            if letter in parsed:
+                raise ValueError(f'duplicate HF option key {letter} for {sample_id}')
+            parsed[letter] = value
+    elif isinstance(raw, (list, tuple)):
+        for position, value in enumerate(raw):
+            if position >= len(OPTION_COLUMNS):
+                raise ValueError(f'too many HF options for {sample_id}: {len(raw)}')
+            letter = OPTION_COLUMNS[position]
+            parsed[letter] = value
+    else:
+        raise ValueError(f'unsupported HF options type for {sample_id}: {type(raw).__name__}')
+
+    return {letter: parsed[letter] for letter in OPTION_COLUMNS if letter in parsed}
 
 
-def file_digest(path, algo='sha256'):
-    h = hashlib.new(algo)
-    with open(path, 'rb') as f:
-        for chunk in iter(lambda: f.read(1 << 20), b''):
-            h.update(chunk)
-    return h.hexdigest()
+def _normalize_question_type(raw, options, sample_id):
+    if isinstance(raw, str):
+        value = raw.strip().lower().replace('_', '-').replace(' ', '-')
+        if value in {'multiple-choice', 'multiplechoice'}:
+            return 'multiple-choice'
+        if value in {'open', 'open-ended', 'free-response'}:
+            return 'open'
+    if _is_missing(raw):
+        return 'multiple-choice' if options else 'open'
+    raise ValueError(f'unknown question_type for {sample_id}: {raw!r}')
 
 
-def load_mmmu(split='validation'):
-    """Return the MMMU_DEV_VAL rows of `split` as a DataFrame, processed exactly like Qwen's loader."""
-    md5 = file_digest(TSV_PATH, 'md5')
-    if md5 != VLMEVALKIT_TSV_MD5:
-        raise RuntimeError(f'{TSV_PATH} has MD5 {md5}, expected {VLMEVALKIT_TSV_MD5}')
+def _dataset_rows(dataset, subject, start_index=0):
+    if len(dataset) != N_PER_SUBJECT:
+        raise ValueError(f'{subject} validation has {len(dataset)} rows; expected {N_PER_SUBJECT}')
+    normalized = []
+    for source in dataset:
+        sample_id = str(source['id'])
+        expected_prefix = f'validation_{subject}_'
+        if not sample_id.startswith(expected_prefix):
+            raise ValueError(f'{subject} returned unexpected sample id {sample_id!r}')
+        options = _parse_options(source.get('options'), sample_id)
+        question_type = _normalize_question_type(source.get('question_type'), options, sample_id)
+        if question_type == 'multiple-choice' and not options:
+            raise ValueError(f'multiple-choice question has no options: {sample_id}')
 
-    import dataset_utils
-    os.environ['LMUData'] = str(DATA_DIR)
-    # With the MD5 matching, load_dataset reads the local file instead of re-downloading it.
-    dataset_utils.MMMU_DATASET_MD5 = VLMEVALKIT_TSV_MD5
-    data = dataset_utils.load_dataset('MMMU_DEV_VAL')
-    RESTORED_OPTION_CELLS[:] = _restore_na_like_options(data)
-    if split != 'all':
-        data = data[data['split'] == split].reset_index(drop=True)
+        row = {
+            'id': sample_id,
+            # A stable, zero-based evaluation ordinal.
+            'index': start_index + len(normalized),
+            'split': 'validation',
+            'question_type': question_type,
+            'question': source['question'],
+            # Keep open answers as supplied, including list-valued answers.
+            'answer': source['answer'],
+        }
+        row.update({letter: options.get(letter) for letter in OPTION_COLUMNS})
+        row.update({column: source.get(column) for column in IMAGE_COLUMNS})
+        normalized.append(row)
+    return normalized
+
+
+def load_mmmu(data_path):
+    """Load 900 rows; store Hub data, Arrow files, and images under data_path."""
+    data_path = Path(data_path).expanduser().resolve()
+    os.environ['HF_HOME'] = str(data_path)
+    from datasets import load_dataset
+
+    dataset_path = data_path / 'datasets'
+    rows = []
+    rows_by_subject = {}
+    for subject in SUBJECTS:
+        dataset = load_dataset(
+            HF_REPO_ID, subject, split='validation', revision=HF_REVISION,
+            cache_dir=str(dataset_path),
+            data_files={'validation': f'{subject}/validation-*.parquet'},
+            # Hub metadata lists dev/test too. Validate the requested split below.
+            verification_mode='no_checks',
+        )
+        subject_rows = _dataset_rows(dataset, subject, start_index=len(rows))
+        rows.extend(subject_rows)
+        rows_by_subject[subject] = len(subject_rows)
+
+    ids = [row['id'] for row in rows]
+    seen = set()
+    duplicates = set()
+    for sample_id in ids:
+        if sample_id in seen:
+            duplicates.add(sample_id)
+        seen.add(sample_id)
+    duplicates = sorted(duplicates)
+    if duplicates:
+        raise ValueError(f'duplicate MMMU validation ids: {duplicates[:5]}')
+    if len(rows) != len(SUBJECTS) * N_PER_SUBJECT:
+        raise ValueError(f'MMMU validation has {len(rows)} rows; expected 900')
+
+    data = pd.DataFrame(rows, columns=DATA_COLUMNS)
+    data.attrs['provenance'] = {
+        'repo_id': HF_REPO_ID,
+        'revision': HF_REVISION,
+        'split': 'validation',
+        'subjects': list(SUBJECTS),
+        'rows_by_subject': rows_by_subject,
+        'n_samples': len(data),
+        'source': 'huggingface_hub',
+        'data_path': str(data_path),
+        'image_order': list(IMAGE_COLUMNS),
+        'image_dump_format': 'PNG',
+    }
     return data
 
 
-# (id, option letter, text) cells restored by the last load_mmmu call; recorded in run_config.json.
-RESTORED_OPTION_CELLS = []
+def _save_png(image, destination):
+    """Save a decoded HF image to PNG without JPEG re-encoding."""
+    from PIL import Image
+
+    if isinstance(image, dict):
+        image_bytes = image.get('bytes')
+        image_path = image.get('path')
+        if image_bytes is not None:
+            image = Image.open(io.BytesIO(image_bytes))
+        elif image_path:
+            image = Image.open(image_path)
+        else:
+            raise ValueError('HF image object has neither bytes nor path')
+    elif isinstance(image, (bytes, bytearray, memoryview)):
+        image = Image.open(io.BytesIO(bytes(image)))
+    elif isinstance(image, (str, os.PathLike)):
+        image = Image.open(image)
+
+    if not hasattr(image, 'save'):
+        raise TypeError(f'unsupported HF image value: {type(image).__name__}')
+
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    temporary = destination.with_name(destination.name + f'.{os.getpid()}.tmp')
+    try:
+        image.save(temporary, format='PNG')
+        os.replace(temporary, destination)
+    finally:
+        if temporary.exists():
+            temporary.unlink()
 
 
-def _restore_na_like_options(data):
-    """Put back option cells that pandas' default NA parsing turned into NaN.
-
-    The option text "None" (validation_Geography_15, whose answer is D) is read as missing, which
-    drops the correct option from Qwen's prompt and from the parsers.
-    """
-    letters = [c for c in string.ascii_uppercase if c in data.columns]
-    raw = pd.read_csv(TSV_PATH, sep='\t', usecols=['id', *letters], dtype=str,
-                      keep_default_na=False, na_values=['']).set_index('id')
-    restored = []
-    for c in letters:
-        values = data['id'].map(raw[c])
-        mask = data[c].isna() & values.notna()
-        if mask.any():
-            restored += [(i, c, v) for i, v in zip(data.loc[mask, 'id'], values[mask])]
-            data.loc[mask, c] = values[mask]
-    return restored
-
-
-def dump_image(line):
-    import dataset_utils
-    return dataset_utils.dump_image(line, str(IMAGE_ROOT))
-
-
-def load_mmmu_official(name):
-    """Import a vendored MMMU module under a unique name (Qwen also ships an `eval_utils`)."""
-    spec = importlib.util.spec_from_file_location(f'mmmu_official_{name}', MMMU_OFFICIAL_DIR / f'{name}.py')
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
-    return module
-
-
-def vendored_digests():
-    files = sorted((CODE_DIR / 'third_party').glob('*/*.py')) + [TSV_PATH, ANSWER_DICT_PATH]
-    return {str(p.relative_to(REPO_ROOT)): file_digest(p) for p in files}
-
-
-def repo_relative(value):
-    """Strip this checkout's absolute path so run_config.json can be committed to the public repo."""
-    return str(value).replace(str(REPO_ROOT) + os.sep, '')
+def dump_image(row, data_path):
+    """Write a row's decoded images as lossless PNGs in image_1..image_7 order."""
+    image_root = Path(data_path).expanduser().resolve() / 'images' / HF_REVISION
+    sample_id = str(row['id'])
+    safe_id = re.sub(r'[^A-Za-z0-9_.-]+', '_', sample_id).strip('._') or 'sample'
+    paths = []
+    for image_index, column in enumerate(IMAGE_COLUMNS, start=1):
+        image = row.get(column)
+        if _is_missing(image):
+            continue
+        path = image_root / safe_id / f'image_{image_index}.png'
+        if not path.is_file() or path.stat().st_size == 0:
+            _save_png(image, path)
+        paths.append(str(path))
+    return paths

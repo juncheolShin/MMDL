@@ -10,7 +10,8 @@ ENV PATH="/opt/venv/bin:${PATH}" \
     PYTHONUNBUFFERED=1 \
     VLLM_WORKER_MULTIPROC_METHOD=spawn \
     VLLM_ENABLE_V1_MULTIPROCESSING=0 \
-    HF_HOME=/opt/hf-cache
+    DATA_PATH=/opt/mmdl/data \
+    HF_HOME=/opt/mmdl/data
 
 COPY code/requirements-eval.txt code/requirements-train.txt /tmp/
 RUN pip install  --upgrade pip && \
@@ -29,8 +30,14 @@ COPY code/train/patch_upstream.py /tmp/patch_upstream.py
 RUN python /tmp/patch_upstream.py
 
 WORKDIR /opt/mmdl
-COPY code/scripts/fetch_assets.sh code/scripts/fetch_hf_datasets.py code/scripts/
-RUN bash code/scripts/fetch_assets.sh && python code/scripts/fetch_hf_datasets.py
+COPY code/scripts/fetch_assets.sh code/scripts/fetch_assets.sh
+RUN bash code/scripts/fetch_assets.sh
+
+# Keep the model asset layer separate so changing the pinned datasets does not
+# download the model weights again.
+COPY code/eval/mmmu_data.py code/eval/mmmu_data.py
+COPY code/scripts/fetch_hf_datasets.py code/scripts/fetch_hf_datasets.py
+RUN python code/scripts/fetch_hf_datasets.py
 
 COPY . .
 RUN python -m compileall -q code && \
@@ -38,18 +45,5 @@ RUN python -m compileall -q code && \
     python code/eval/tests/test_prompting.py && \
     python code/eval/tests/test_answer_extraction.py
 
-
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    python3 \
-    python3-dev \
-    python3-venv \
-    python3-pip \
-    git \
-    curl \
-    ca-certificates \
-    libglib2.0-0 \
-    libgl1 \
-    && rm -rf /var/lib/apt/lists/*
-
-ENV HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1
+ENV HF_HUB_OFFLINE=0 HF_DATASETS_OFFLINE=0 TRANSFORMERS_OFFLINE=1
 CMD ["bash"]

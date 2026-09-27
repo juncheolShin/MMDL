@@ -4,6 +4,7 @@ import tomllib
 from pathlib import Path
 
 DEFAULT_CONFIG = Path(__file__).resolve().parents[1] / 'configs' / 'rtx4090.toml'
+DEFAULT_EVALUATION_CONFIG = Path(__file__).resolve().parents[1] / 'configs' / 'evaluation.toml'
 
 EVALUATION_TYPES = {
     'temperature': float, 'top_p': float, 'top_k': int,
@@ -40,4 +41,8 @@ def load_section(path, section, types):
 
 
 def file_sha256(path):
-    return hashlib.sha256(Path(path).read_bytes()).hexdigest()
+    digest = hashlib.sha256()
+    with Path(path).open('rb') as stream:
+        for chunk in iter(lambda: stream.read(1 << 20), b''):
+            digest.update(chunk)
+    return digest.hexdigest()

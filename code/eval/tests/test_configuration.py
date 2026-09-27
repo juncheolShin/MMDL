@@ -11,7 +11,7 @@ evaluation = load_section(DEFAULT_CONFIG, 'evaluation', EVALUATION_TYPES)
 training = load_section(DEFAULT_CONFIG, 'training', TRAINING_TYPES)
 assert evaluation['temperature'] == 0.0
 assert evaluation['seed'] == 0
-assert evaluation['max_new_tokens'] == 512
+assert evaluation['max_new_tokens'] == 2048
 assert evaluation['min_pixels'] == 256 * 32 * 32
 assert evaluation['max_pixels'] == 2048 * 32 * 32
 assert training['lora_r'] > 0

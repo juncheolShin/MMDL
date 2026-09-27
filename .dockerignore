@@ -7,4 +7,7 @@ logs
 **/__pycache__
 **/*.pyc
 **/*.part
-results/*/predictions.jsonl
+
+# Evaluation outputs and writing scratch files are never image build inputs.
+results/
+_workspace/

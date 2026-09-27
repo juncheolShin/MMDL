@@ -3,36 +3,35 @@
 Writes results/<run-name>/run_config.json and predictions.jsonl (git-ignored: it embeds the MMMU questions).
 Scoring is done by score_mmmu.py.
 
-    python code/eval/infer_mmmu.py --model models/Qwen3-VL-4B-Instruct --run-name base_greedy
+    python code/eval/infer_mmmu.py --model models/Qwen3-VL-4B-Instruct --run-name evaluation
 """
 import argparse
 import json
 import os
 import platform
 import sys
+import string
 import time
 from datetime import datetime, timezone
 from importlib.metadata import version
 from pathlib import Path
 
-import numpy as np
+import pandas as pd
 from tqdm import tqdm
 
 import mmmu_data
 from prompting import build_mmmu_prompt
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from configuration import DEFAULT_CONFIG, EVALUATION_TYPES, file_sha256, load_section  # noqa: E402
+from configuration import DEFAULT_EVALUATION_CONFIG, EVALUATION_TYPES, file_sha256, load_section  # noqa: E402
 
 
 def parse_args():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument('--model', required=True, help='local model dir (base or merged fine-tuned checkpoint)')
     ap.add_argument('--run-name', required=True)
-    ap.add_argument('--config', type=Path, default=DEFAULT_CONFIG)
-    ap.add_argument('--split', default='validation', choices=['validation', 'dev', 'all'])
-    ap.add_argument('--ids', nargs='*', help='only these MMMU ids, e.g. validation_Art_8')
-    ap.add_argument('--limit', type=int, help='only the first N rows (smoke test)')
-    ap.add_argument('--data-root', default=str(mmmu_data.DATA_DIR))
+    ap.add_argument('--config', type=Path, default=DEFAULT_EVALUATION_CONFIG)
+    ap.add_argument('--data-path', type=Path, default=mmmu_data.DATA_DIR,
+                    help='MMMU data directory inside the container')
     ap.add_argument('--out-root', default=str(mmmu_data.RESULTS_DIR))
     ap.add_argument('--overwrite', action='store_true')
     args = ap.parse_args()
@@ -41,20 +40,17 @@ def parse_args():
     return args
 
 
-def to_jsonable(v):
-    if isinstance(v, np.integer):
-        return int(v)
-    if isinstance(v, np.floating):
-        return None if np.isnan(v) else float(v)
-    return v
-
-
 def model_fingerprint(model_dir):
     files = sorted(Path(model_dir).glob('*.safetensors')) + sorted(Path(model_dir).glob('*.json'))
-    return {p.name: mmmu_data.file_digest(p) for p in files}
+    return {p.name: file_sha256(p) for p in files}
+
+
+def repo_relative(value):
+    return str(value).replace(str(mmmu_data.REPO_ROOT) + os.sep, '')
 
 
 def main():
+    pipeline_start = time.time()
     args = parse_args()
     if not 0 < args.min_pixels <= args.max_pixels:
         sys.exit('expected 0 < min-pixels <= max-pixels')
@@ -62,38 +58,45 @@ def main():
         sys.exit('max-new-tokens must be smaller than max-model-len')
     if not 0 <= args.temperature or not 0 < args.top_p <= 1:
         sys.exit('invalid temperature or top_p in evaluation config')
-    mmmu_data.configure_data_root(args.data_root)
     out_dir = Path(args.out_root) / args.run_name
     pred_path = out_dir / 'predictions.jsonl'
     if pred_path.exists() and not args.overwrite:
         sys.exit(f'{pred_path} exists; pass --overwrite or pick another --run-name')
     out_dir.mkdir(parents=True, exist_ok=True)
 
+    data = mmmu_data.load_mmmu(args.data_path)
+
     # Imports vllm/transformers/qwen_vl_utils and sets VLLM_WORKER_MULTIPROC_METHOD=spawn.
-    from run_mmmu import prepare_inputs_for_vllm
+    from third_party.qwen3vl_mmmu.input_utils import prepare_inputs_for_vllm
     from transformers import AutoProcessor
     from vllm import LLM, SamplingParams
+    import torch
 
-    data = mmmu_data.load_mmmu(args.split)
-    if args.ids:
-        missing = set(args.ids) - set(data['id'])
-        if missing:
-            sys.exit(f'unknown ids: {sorted(missing)}')
-        data = data[data['id'].isin(args.ids)]
-    if args.limit:
-        data = data.head(args.limit)
-    print(f'{len(data)} samples ({args.split})')
+    provenance = data.attrs['provenance']
+    print(f'{len(data)} samples (validation)')
+    evaluation_data = {
+        'provenance': provenance,
+        'samples': {
+            row['id']: {
+                'question_type': row['question_type'],
+                'ground_truth': row['answer'],
+                'options': {c: row[c] for c in string.ascii_uppercase
+                            if c in row and pd.notna(row[c])},
+            } for _, row in data.iterrows()
+        },
+    }
+    (out_dir / 'evaluation_data.json').write_text(json.dumps(evaluation_data, ensure_ascii=False, indent=2))
 
     processor = AutoProcessor.from_pretrained(args.model)
     rows, inputs = [], []
     for _, line in tqdm(data.iterrows(), total=len(data), desc='building prompts'):
         messages = build_mmmu_prompt(
-            line, mmmu_data.dump_image, args.min_pixels, args.max_pixels)
+            line, mmmu_data.dump_image(line, args.data_path), args.min_pixels, args.max_pixels)
         vllm_input = prepare_inputs_for_vllm(messages, processor)
         inputs.append(vllm_input)
         rows.append({
             'id': line['id'],
-            'index': to_jsonable(line['index']),
+            'index': int(line['index']),
             'split': line['split'],
             'question_type': line['question_type'],
             'answer': line['answer'],
@@ -139,22 +142,30 @@ def main():
     config = {
         'run_name': args.run_name,
         'created_utc': datetime.now(timezone.utc).isoformat(timespec='seconds'),
-        'argv': [mmmu_data.repo_relative(a) for a in sys.argv],
-        'args': {k: mmmu_data.repo_relative(v) if isinstance(v, (str, Path)) else v
+        'argv': [repo_relative(a) for a in sys.argv],
+        'args': {k: repo_relative(v) if isinstance(v, (str, Path)) else v
                  for k, v in vars(args).items()},
         'decoding_preset': 'greedy' if args.temperature == 0 else 'sampling',
         'config_sha256': file_sha256(args.config),
-        'prompt_style': 'notion_2026_09_25_mc_letter_open_final_answer',
         'sampling_params': {**sampling, 'max_tokens': args.max_new_tokens},
-        'llm_kwargs': {**llm_kwargs, 'model': mmmu_data.repo_relative(args.model)},
+        'llm_kwargs': {**llm_kwargs, 'model': repo_relative(args.model)},
         'n_samples': len(rows),
         'generation_seconds': round(gen_seconds, 1),
+        'inference_pipeline_seconds': round(time.time() - pipeline_start, 1),
         'model_fingerprint_sha256': model_fingerprint(args.model),
-        'data_and_vendored_sha256': mmmu_data.vendored_digests(),
-        'restored_option_cells': mmmu_data.RESTORED_OPTION_CELLS,
+        'dataset': provenance,
+        'data_and_vendored_sha256': {
+            'evaluation_data.json': file_sha256(out_dir / 'evaluation_data.json'),
+            **{str(p.relative_to(mmmu_data.REPO_ROOT)): file_sha256(p)
+               for p in sorted((mmmu_data.REPO_ROOT / 'code' / 'third_party').glob('*/*.py'))},
+        },
+        'pipeline_sha256': {str(p.relative_to(mmmu_data.REPO_ROOT)): file_sha256(p)
+                            for p in sorted(Path(__file__).parent.glob('*.py'))},
         'env': {
             'python': platform.python_version(),
-            **{pkg: version(pkg) for pkg in ['vllm', 'torch', 'transformers', 'qwen-vl-utils']},
+            **{pkg: version(pkg) for pkg in ['vllm', 'torch', 'transformers', 'qwen-vl-utils', 'datasets']},
+            'gpu': torch.cuda.get_device_name(0),
+            'gpu_total_memory_bytes': torch.cuda.get_device_properties(0).total_memory,
             'CUDA_VISIBLE_DEVICES': os.environ.get('CUDA_VISIBLE_DEVICES'),
             'host': platform.node(),
         },

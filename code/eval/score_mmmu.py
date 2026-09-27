@@ -9,20 +9,18 @@ Two extractors turn each response r_n into r̂_n:
 Writes scores.json, per_sample.csv and mc_disagreements.csv (MC items where the two extractors differ,
 for manual auditing).
 
-    python code/eval/score_mmmu.py results/base_greedy
+    python code/eval/score_mmmu.py results/evaluation
 """
 import argparse
 import collections
 import csv
 import json
 import random
-import string
+import sys
 from pathlib import Path
 
-import pandas as pd
-
-import mmmu_data
 from answer_extraction import answer_type_of, extract_choice, extract_open, open_is_correct
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 
 class RecordingRandom:
@@ -64,13 +62,13 @@ def summarize(correct_by_id, answers, domains):
     }
 
 
-def score_structured(preds, answers, options_by_id):
+def score_structured(preds, answers):
     rows = {}
     for p in preds:
         gt = answers[p['id']]
         if gt['question_type'] == 'multiple-choice':
             atype = 'choice'
-            ex = extract_choice(p['response'], options_by_id[p['id']])
+            ex = extract_choice(p['response'], gt['options'])
             correct = ex.pred == gt['ground_truth']
             pred = ex.pred
         else:
@@ -83,8 +81,8 @@ def score_structured(preds, answers, options_by_id):
     return rows
 
 
-def score_official(preds, answers, options_by_id):
-    eu = mmmu_data.load_mmmu_official('eval_utils')
+def score_official(preds, answers):
+    from third_party.mmmu_official import eval_utils as eu
     rng = RecordingRandom()
     eu.random = rng
     rows = {}
@@ -92,7 +90,7 @@ def score_official(preds, answers, options_by_id):
         gt = answers[p['id']]
         before = rng.calls
         if gt['question_type'] == 'multiple-choice':
-            index2ans = options_by_id[p['id']]
+            index2ans = gt['options']
             parsed = eu.parse_multi_choice_response(p['response'], list(index2ans), index2ans)
         else:
             parsed = eu.parse_open_response(p['response'])
@@ -105,25 +103,21 @@ def score_official(preds, answers, options_by_id):
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument('run_dir')
-    ap.add_argument('--data-root', default=str(mmmu_data.DATA_DIR))
     args = ap.parse_args()
-    mmmu_data.configure_data_root(args.data_root)
     run_dir = Path(args.run_dir)
 
     preds = [json.loads(l) for l in open(run_dir / 'predictions.jsonl')]
-    answers = json.load(open(mmmu_data.ANSWER_DICT_PATH))
-    unknown = [p['id'] for p in preds if p['id'] not in answers]
-    if unknown:
-        raise SystemExit(f'{len(unknown)} ids are not in the official val answer dict, e.g. {unknown[:3]}')
-    meta = mmmu_data.load_mmmu('all')
-    options_by_id = {
-        r['id']: {c: r[c] for c in string.ascii_uppercase if c in meta.columns and not pd.isna(r[c])}
-        for _, r in meta.iterrows()
-    }
-    domains = mmmu_data.load_mmmu_official('data_utils').DOMAIN_CAT2SUB_CAT
+    metadata_path = run_dir / 'evaluation_data.json'
+    if not metadata_path.is_file():
+        raise SystemExit(f'missing {metadata_path}; scoring requires metadata saved during MMMU inference')
+    evaluation_data = json.loads(metadata_path.read_text())
+    answers = evaluation_data['samples']
+    if len(preds) != 900 or len({p['id'] for p in preds}) != 900 or set(answers) != {p['id'] for p in preds}:
+        raise SystemExit('evaluation requires 900 unique predictions matching the loaded dataset')
+    from third_party.mmmu_official.data_utils import DOMAIN_CAT2SUB_CAT as domains
 
-    st = score_structured(preds, answers, options_by_id)
-    off = score_official(preds, answers, options_by_id)
+    st = score_structured(preds, answers)
+    off = score_official(preds, answers)
     ids = sorted(st)
     mc_ids = [i for i in ids if st[i]['answer_type'] == 'choice']
     disagree = [i for i in mc_ids if st[i]['pred'] is not None and st[i]['pred'] != off[i]['parsed']]

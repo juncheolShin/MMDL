@@ -1,12 +1,11 @@
 """Validate a non-benchmark JSONL and run Qwen3-VL's pinned multimodal LoRA trainer."""
 import argparse
-import hashlib
 import json
 import os
 import sys
 from pathlib import Path
 
-EVAL_DATA_ROOT = Path(__file__).resolve().parents[2] / 'data'
+EVAL_DATA_PATH = Path(os.environ.get('DATA_PATH', Path(__file__).resolve().parents[2] / 'data'))
 DEFAULT_MODEL = Path(__file__).resolve().parents[2] / 'models' / 'Qwen3-VL-4B-Instruct'
 UPSTREAM_COMMIT = '96588727e44c78b25ba03ea03b8e12f7e64fd0da'
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
@@ -20,7 +19,7 @@ def within(path, root):
 def validate_data(annotation, image_root):
     annotation = annotation.resolve()
     image_root = image_root.resolve()
-    eval_root = EVAL_DATA_ROOT.resolve()
+    eval_root = EVAL_DATA_PATH.resolve()
     for path in (annotation, image_root):
         if within(path, eval_root) or any('mmmu' in p.lower() for p in path.parts):
             raise ValueError(f'MMMU/MMMU-Pro evaluation data cannot be used for training: {path}')
@@ -92,7 +91,7 @@ def main():
             or args.max_steps == 0):
         parser.error('invalid training values in config')
     output = args.output_dir.resolve()
-    if within(output, EVAL_DATA_ROOT.resolve()):
+    if within(output, EVAL_DATA_PATH.resolve()):
         parser.error('output directory must be outside evaluation data')
     output.mkdir(parents=True, exist_ok=True)
 
@@ -108,9 +107,8 @@ def main():
     }
     from qwenvl.train.train_qwen import train
 
-    digest = hashlib.sha256(args.annotation.read_bytes()).hexdigest()
     (output / 'mmdl_training_config.json').write_text(json.dumps({
-        'annotation_sha256': digest, 'training_examples': count,
+        'annotation_sha256': file_sha256(args.annotation), 'training_examples': count,
         'model': str(args.model), 'qwen_training_commit': UPSTREAM_COMMIT,
         'epochs': args.epochs, 'learning_rate': args.learning_rate,
         'gradient_accumulation_steps': args.gradient_accumulation_steps,

@@ -1,9 +1,9 @@
 # MMMU-val Baseline Evaluation Report — Qwen3-VL-4B-Instruct
 
-- **팀명**: _(기입)_
+- **팀명**: 도비
 - **팀원**: 신준철, 이민규, 김연서, 이진우
-- **작성일**: 26.09.27
-- **재현 커맨드**: `(예: bash scripts/run_mmmu_eval.sh)`
+- **작성일**: 2026-09-27
+- **재현 커맨드**: 1절 실행 커맨드 참조
 
 ---
 
@@ -12,41 +12,69 @@
 | 항목 | 값 |
 |---|---|
 | 모델 checkpoint | `Qwen/Qwen3-VL-4B-Instruct` (ebb281ec70b05090aa6165b016eac8ec08e71b17) |
-| 추론 백엔드 |  vLLM, 0.11.2 |
-| 사용 GPU | _(RTX3090, 24GB)_ |
-| 실측 peak VRAM | 21GB |
-| 총 소요 시간 | 약 6분 10초 |
-| 의존성 | _(requirements.txt / environment.yml 경로 링크)_ |
-| 실행 커맨드 | ```bash\n_(모델 checkpoint 위치와 MMMU 데이터 위치가 인자로 드러나야 함 — 예: --model_path <경로 또는 HF repo id> --data_root <MMMU 데이터 경로>. 하드코딩된 절대경로 대신 인자/환경변수로 받아서, 채점자가 자기 경로만 바꿔 끼우면 그대로 재현되게 작성)_\n``` |
+| 추론 백엔드 | vLLM 0.11.2 |
+| 사용 GPU | RTX 3090, 24GB |
+| 실측 peak VRAM | 약 21GB |
+| 총 소요 시간 |707.7초(약 11분 48초) / 900문항 로드·입력 준비·모델 로드·생성·채점 |
+| 의존성 | [평가 의존성](../code/requirements-eval.txt), [학습·다운로드 의존성](../code/requirements-train.txt), [Dockerfile](../Dockerfile) |
+| 실행 커맨드 | 아래 bash 명령. 모델·데이터·설정·결과 경로를 CLI 인자로 지정한다. |
+
+호스트의 프로젝트 루트에서 처음 한 번 이미지를 빌드한다. 모델과 평가 데이터는 이미지에 포함된다.
+
+```bash
+docker build -t "<Docker 이미지 이름>" .
+```
+
+다음 명령으로 추론과 채점을 실행한다. `<...>`는 실제 값으로 바꾸며, 모델·데이터·설정 파일은 모두 **컨테이너 내부 경로**를 지정한다.
+
+```bash
+DOCKER_IMAGE="<Docker 이미지 이름>" \
+CONTAINER_NAME="<컨테이너 이름>" \
+bash code/scripts/run_mmmu_eval.sh \
+  --model "<모델 체크포인트 경로>" \
+  --data-path "<MMMU 데이터 경로>" \
+  --config "<평가 설정 파일 경로>" \
+  --out-root "<결과 저장 상위 경로>" \
+  --run-name "<결과 폴더 이름>"
+```
+
+
+
+`<평가 설정 파일 경로>`에는 3절의 생성 설정을 담은 TOML 파일을 지정한다. 데이터와 이미지는 `--data-path`에 저장한다. 
+
+파인튜닝 작업은 호스트에서 다음 명령으로 같은 컨테이너에 접속해 진행한다.
+
+```bash
+docker exec -it --workdir /opt/mmdl "<컨테이너 이름>" bash
+```
+학습 후에는 평가 명령의 `--model`을 병합한 체크포인트 경로로 바꾸고 결과 폴더 이름을 새로 지정한다. 
 
 ## 2. 프롬프트
 
 **실제 모델에 들어간 프롬프트 전문** (변수 부분은 `{}`로 표시):
 
-```
-_(여기에 그대로)_
-```
+객관식:
 
-- **출처**: _(직접 설계 / 차용한 도구·저장소명 + 링크)_
-- **선택 이유**: _(왜 이 프롬프트를 골랐는지)_
-
-<details>
-<summary>작성 형식 예시 (내용은 예시일 뿐입니다. 본인이 실제 찾은/설계한 프롬프트로 교체)</summary>
-
-```
+```text
 Question: {question}
-Choices:
-A. {option_A}
-B. {option_B}
-C. {option_C}
-D. {option_D}
-Pick the single best choice from the list above.
+Options:
+{option_lines}
+Answer with the option letter only.
 ```
 
-- **출처**: (예시) 오픈소스 평가 툴킷 XYZ의 프롬프트 생성 함수에서 차용, 문구 일부만 수정
-- **선택 이유**: (예시) 모델이 장황한 설명 없이 선택지 하나로 바로 답하도록 유도하기 위해 간결한 지시문 사용
+주관식:
 
-</details>
+```text
+{question}
+
+Solve the question using the image(s) when relevant.Answer with exactly one line in this format: Answer: <your short answer>.You must not show reasoning.
+```
+
+- 출처: [MMMU 공식 저장소의 유형별 프롬프트 설정](https://github.com/MMMU-Benchmark/MMMU/blob/268471d0d488258990025331c7528359c324aa25/mmmu/configs/llava1.5.yaml)을 참고해 출력 지시문을 수정했다. 객관식에는 선택지 글자만 출력하도록 요구하고, 주관식에는 Answer: <정답> 형식과 풀이 생략 지시를 추가했다.
+
+- 선택 이유: 문항 유형에 맞춰 응답 형식을 고정함으로써 풀이와 부가 설명이 정답 추출에 개입할 여지를 줄이고자 했다. 또한 한정된 생성 예산에 맞춰 풀이 과정을 생략하고 정답만을 출력하게 하여 정답 잘림의 가능성을 줄이고자 하였다. 이 프롬프트를 파인튜닝 이후에도 그대로 사용해, 동일한 입력 형식과 채점 규칙 아래에서 성능 변화를 비교한다. 
+
+
 
 ## 3. 생성(Decoding) 설정
 
@@ -54,7 +82,7 @@ Pick the single best choice from the list above.
 
 | 파라미터 | 값 |
 |---|---|
-| `do_sample` | |
+| `do_sample` | vLLM에는 전달하지 않음. temperature=0으로 greedy decoding 사용 |
 | `temperature` | 0.0 |
 | `top_p` | 0.8 |
 | `top_k` | 20 |
@@ -62,75 +90,142 @@ Pick the single best choice from the list above.
 | `presence_penalty` | 1.5 |
 | `seed` | 0 |
 
-- **출처**: _(모델 제공사의 공식 recipe를 찾았다면 그 출처/링크. 못 찾았거나 다른 값(예: greedy)을 쓰기로
-  했다면 그 사실과 이유)_
+- **출처**: [Qwen MMMU Instruct 실행 스크립트](https://github.com/QwenLM/Qwen3-VL/blob/96588727e44c78b25ba03ea03b8e12f7e64fd0da/evaluation/mmmu/infer_instruct.sh)와 [추론 코드](https://github.com/QwenLM/Qwen3-VL/blob/96588727e44c78b25ba03ea03b8e12f7e64fd0da/evaluation/mmmu/run_mmmu.py). 공식 설정은 temperature 0.7, top_p 0.8, top_k 20, repetition_penalty 1.0, presence_penalty 1.5, seed 42다. 이번 평가는 파인튜닝 전후 문항별 비교에서 샘플링에 따른 변동을 줄이려고 greedy와 seed 0을 선택했다. 문항당 한 번 생성하며, top_p·top_k는 전달값이지만 greedy에서는 확률 샘플링을 하지 않는다.
 
 ### 3.2 생성 예산 / 이미지 해상도
 
 | 파라미터 | 값 |
 |---|---|
 | `max_new_tokens` | 512 |
-| 이미지 해상도 처리 (`min_pixels`/`max_pixels` 등) | 256*32*32 / 2048*32*32 |
+| 이미지 해상도 처리 (`min_pixels`/`max_pixels` 등) | min_pixels=262144 (256×32×32), max_pixels=2097152 (2048×32×32). qwen-vl-utils로 종횡비를 유지해 처리 |
 
-**선택 근거** (본인이 사용한 인프라 제약과 어떻게 연결되는지 — 속도/VRAM/응답 잘림 등 trade-off): _(적절히)_
+**선택 근거** (본인이 사용한 인프라 제약과 어떻게 연결되는지 — 속도/VRAM/응답 잘림 등 trade-off): 짧은 정답을 요구해도 풀이가 먼저 나올 수 있어 최대 512토큰을 허용했다. 이미지 면적 상한은 2048토큰에 해당하는 2097152 픽셀로 두고 동시 요청을 2개로 제한해, 24GB GPU에서 다중 이미지 입력과 KV cache의 메모리 부담을 줄이고자 했다.
+
+이 선택을 점검하기 위해 같은 모델과 validation 900문항을 대상으로 다음 세 실행을 비교했다. GPU는 모두 RTX 3090이며, greedy·seed 0·출력 한도 512와 이미지 상한 2048토큰도 같았다. 표의 시간은 데이터 준비·모델 로딩·채점을 제외한 생성 구간이다.
+
+| 비교 조건 | 정확도 | 평균 출력 토큰 | 출력 한도 도달 | 생성 시간 |
+|---|---|---|---|---|
+| **2절 프롬프트 · 이미지 하한 256토큰** | **52.00% (468/900)** | 39.60 | 60문항 | 346.9초 |
+| MMMU 공개 지시문 적용 · 이미지 하한 256토큰 | 51.78% (466/900) | 73.91 | 106문항 | 546.1초 |
+| 2절 프롬프트 · 이미지 하한 64토큰 | 50.89% (458/900) | 38.72 | 57문항 | 324.2초 |
+
+공개 지시문 비교에서는 [MMMU 공식 저장소의 프롬프트 설정](https://github.com/MMMU-Benchmark/MMMU/blob/268471d0d488258990025331c7528359c324aa25/mmmu/configs/llava1.5.yaml)에 따라 객관식의 마지막 지시를 `Answer with the option's letter from the given choices directly.`, 주관식의 지시를 `Answer the question using a single word or phrase.`로 바꿨다. 전체 정확도 차이는 2문항이었지만, 생성 시간은 57.4% 늘고 출력 한도에 도달한 문항도 46개 늘었다. 따라서 현재의 512토큰 예산에서는 2절 프롬프트를 유지하기로 했다. 다만 기준 실행에서도 60문항이 잘렸으므로 512토큰이 모든 문항에 충분하다는 뜻은 아니다. 최대 입력+출력은 4142토큰으로 context 한도 8192에는 닿지 않았다.
+
+이미지 하한 비교에서는 900문항의 텍스트 프롬프트가 모두 같았다. 하한을 256에서 64토큰으로 낮추면 평균 입력 토큰이 630.86에서 535.88로 약 15.1% 줄고 생성 시간도 22.7초(6.5%) 단축됐다. 그러나 새로 맞힌 문항은 12개, 놓친 문항은 22개여서 정답이 10개 줄었다. 놓친 22개 중 21개는 두 실행 모두 정상 종료한 선택지 응답으로, 파싱 실패가 아니라 모델이 다른 선택지를 출력한 경우였다. 이번 비교에서는 22.7초의 시간 절약보다 10문항의 정답 차이를 우선해 하한 256토큰을 유지했다.
+
+다만 이미지 상한 2048토큰은 세 실행에서 고정했으며, 상한별 정확도는 비교하지 않았다. 이미지 상한의 영향은 추후 비교해야하며 현 설정의 한계로 남는다.
+
+
 
 ## 4. 채점(파싱) 방식
 
-- 사용한 파서/로직: _(자체 구현 / 차용 도구명 + 링크)_
-- 동작 방식 요약: _(예: 어떤 순서로 규칙을 적용하는지, 실패 시 fallback은 무엇인지)_
+- **사용한 파서/로직**: [answer_extraction.py](../code/eval/answer_extraction.py)에서 모델 응답의 답을 추출하고, [score_mmmu.py](../code/eval/score_mmmu.py)에서 정답과 비교한다.
+
+  채점 규칙의 참고 기준은 [MMMU 공식 평가 코드의 `parse_multi_choice_response`, `parse_open_response`, `eval_open`](https://github.com/MMMU-Benchmark/MMMU/blob/268471d0d488258990025331c7528359c324aa25/mmmu/utils/eval_utils.py)이다. 객관식의 선택지 글자 비교와 숫자 답의 소수 둘째 자리 반올림 비교는 공식 구현과 같다. 다만 답을 찾는 과정은 별도로 구현했다. `Answer: C`처럼 답을 명시한 표현을 우선하며, 굵은 글씨나 수식 표기로 감싼 답도 읽도록 했다. 또한 공식 객관식 파서는 답을 찾지 못하면 선택지를 무작위로 고르지만, 이 평가에서는 오답으로 처리한다. 공식 파서로도 별도 채점해 비교하며, **5절의 제출 점수에는 자체 파서의 결과를 사용했다.**
+
+- **동작 방식 요약**: 응답에서 **모델이 답으로 제시한 부분을 찾은 뒤, 그 값을 정답과 비교**한다. 풀이 전체를 다른 모델에게 보내 정오를 판단하게 하지는 않는다.
+
+  **① 객관식 — 선택지 글자 하나를 찾아 비교한다.**
+
+  먼저 굵은 글씨·수식 기호 같은 표시를 정리한다. 예를 들어 `Final answer: **C**`에서는 `C`를 읽는다. 답을 찾는 순서는 다음과 같으며, 앞 단계에서 답을 찾으면 뒤 단계는 적용하지 않는다.
+
+  1. `Answer: C`, `C is correct`, `\boxed{C}`처럼 답을 명시한 표현을 찾는다. 여러 번 답을 제시했다면 가장 마지막 답을 사용한다.
+  2. 명시한 답이 없으면 `C. 설명…`처럼 응답 첫머리에 적힌 선택지를 확인한다. 선택지를 단순히 나열한 경우는 제외한다.
+  3. 선택지 옆에 체크 표시나 `correct`가 있는지 확인한다. 다음으로 응답 전체, 마지막 문단 순서로 선택지 내용이 하나만 언급됐는지 살핀다.
+  4. 그래도 찾지 못하면 문장 속에 독립적으로 등장한 B–H 중 유일한 글자를 사용한다. 이 보조 규칙만 B–H로 제한하며, 앞 단계에서는 해당 문항의 실제 선택지 범위를 사용한다.
+
+  추출한 글자가 정답 글자와 같으면 정답이다.
+
+  **② 주관식 — 숫자, 그림 속 기호, 일반 텍스트를 구분해 비교한다.**
+
+  데이터셋 정답의 **형식**을 보고 숫자형, 한 글자 기호형, 텍스트형 중 적용할 규칙을 정한다. 정답 정보는 추론 후 채점에만 사용하며 모델 입력에는 넣지 않는다. 응답에서는 마지막 `\boxed{…}` 안의 답, 마지막 `Answer:` 뒤의 답 순서로 확인한다. 둘 다 없으면 숫자·기호형은 끝 문장부터 답을 찾고, 텍스트형은 첫 문장과 마지막 문장을 확인한다.
+
+  아래는 비교 규칙을 설명하기 위한 예시다.
+
+  | 답 유형 | 모델 응답 → 비교할 값 | 정답 판정 규칙 |
+  |---|---|---|
+  | 숫자 | `Answer: 1/2` → `0.5` | 분수·지수·쉼표·million 등의 표기를 수치로 바꾼 뒤, 정답과 각각 소수 둘째 자리까지 반올림해 비교한다. `%`가 있으면 표시된 숫자와 이를 100으로 나눈 값 모두를 비교 후보로 둔다. |
+  | 그림 속 기호 | `Answer: c` → `C` | 추출한 글자를 대문자로 바꿔 정답 기호와 비교한다. |
+  | 텍스트 | `Answer: Paris` → `paris` | 대소문자와 공백을 정리한 뒤 정답 구문이 포함됐는지 확인한다. 다른 단어의 일부가 우연히 일치하는 경우는 제외한다. |
+
+  **③ 답을 찾지 못한 문항도 평가에 포함한다.**
+
+  추출 실패는 오답으로 처리하고 전체 900문항의 분모에 포함한다. 이번 평가에서는 객관식 39문항, 주관식 1문항이 이에 해당했다. 문항별 응답 원문, 추출한 답, 적용한 규칙을 저장해 채점 결과를 다시 확인할 수 있도록 했다.
 
 ## 5. 결과
 
 | No. | Subject | Data Num | Acc |
 |---|---|---|---|
-| 1 | Accounting | 30 | 53.3% |
-| 2 | Agriculture | 30 | 50.0% |
-| 3 | Architecture_and_Engineering | 30 | 36.7% |
-| 4 | Art | 30 | 70.0% |
-| 5 | Art_Theory | 30 | 80.0% |
-| 6 | Basic_Medical_Science | 30 | 66.7% |
-| 7 | Biology | 30 | 56.7% |
-| 8 | Chemistry | 30 | 40.0% |
-| 9 | Clinical_Medicine | 30 | 63.3% |
-| 10 | Computer_Science | 30 | 50.0% |
-| 11 | Design | 30 | 80.0% |
-| 12 | Diagnostics_and_Laboratory_Medicine | 30 | 33.3% |
-| 13 | Economics | 30 | 50.0% |
-| 14 | Electronics | 30 | 40.0% |
-| 15 | Energy_and_Power | 30 | 50.0% |
-| 16 | Finance | 30 | 36.7% |
-| 17 | Geography | 30 | 56.7% |
-| 18 | History | 30 | 70.0% |
-| 19 | Literature | 30 | 83.3% |
-| 20 | Manage | 30 | 50.0% |
-| 21 | Marketing | 30 | 63.3% |
-| 22 | Materials | 30 | 23.3% |
-| 23 | Math | 30 | 40.0% |
-| 24 | Mechanical_Engineering | 30 | 40.0% |
-| 25 | Music | 30 | 30.0% |
-| 26 | Pharmacy | 30 | 73.3% |
-| 27 | Physics | 30 | 40.0% |
-| 28 | Psychology | 30 | 73.3% |
-| 29 | Public_Health | 30 | 50.0% |
-| 30 | Sociology | 30 | 53.3% |
-| | **Overall (macro avg)** | **900** | **53.4% (481/900)** |
+| 1 | Accounting | 30 | 50.00% (15/30) |
+| 2 | Agriculture | 30 | 46.67% (14/30) |
+| 3 | Architecture_and_Engineering | 30 | 23.33% (7/30) |
+| 4 | Art | 30 | 66.67% (20/30) |
+| 5 | Art_Theory | 30 | 83.33% (25/30) |
+| 6 | Basic_Medical_Science | 30 | 66.67% (20/30) |
+| 7 | Biology | 30 | 56.67% (17/30) |
+| 8 | Chemistry | 30 | 30.00% (9/30) |
+| 9 | Clinical_Medicine | 30 | 66.67% (20/30) |
+| 10 | Computer_Science | 30 | 50.00% (15/30) |
+| 11 | Design | 30 | 86.67% (26/30) |
+| 12 | Diagnostics_and_Laboratory_Medicine | 30 | 33.33% (10/30) |
+| 13 | Economics | 30 | 46.67% (14/30) |
+| 14 | Electronics | 30 | 40.00% (12/30) |
+| 15 | Energy_and_Power | 30 | 53.33% (16/30) |
+| 16 | Finance | 30 | 33.33% (10/30) |
+| 17 | Geography | 30 | 53.33% (16/30) |
+| 18 | History | 30 | 70.00% (21/30) |
+| 19 | Literature | 30 | 83.33% (25/30) |
+| 20 | Manage | 30 | 40.00% (12/30) |
+| 21 | Marketing | 30 | 60.00% (18/30) |
+| 22 | Materials | 30 | 23.33% (7/30) |
+| 23 | Math | 30 | 40.00% (12/30) |
+| 24 | Mechanical_Engineering | 30 | 43.33% (13/30) |
+| 25 | Music | 30 | 36.67% (11/30) |
+| 26 | Pharmacy | 30 | 63.33% (19/30) |
+| 27 | Physics | 30 | 36.67% (11/30) |
+| 28 | Psychology | 30 | 73.33% (22/30) |
+| 29 | Public_Health | 30 | 43.33% (13/30) |
+| 30 | Sociology | 30 | 60.00% (18/30) |
+| | **Overall (macro avg)** | **900** | **52.00% (468/900)** |
 
-계산식: `Overall = mean(30개 과목 accuracy)` _(다른 방식을 썼다면 명시)_
+계산식: `Overall = mean(30개 과목 accuracy)` 과목당 30문항이므로 468/900×100=52.00%와 같다. 표시한 반올림값이 아닌 원래 정답 수로 계산했다. 객관식 462/847, 주관식 6/53이다.
 
 ## 6. 공식 수치와의 비교
 
 | | Overall (MMMU val) |
 |---|---|
 | 공식 (Qwen3-VL Technical Report) | 67.4 |
-| 우리 재현 결과 | 53.4 |
-| 차이 (Δ) |-14.0 |
+| 우리 재현 결과 | 52.00 |
+| 차이 (Δ) | −15.40%p (우리 결과 − 공식) |
+
+공식 수치 출처: [Qwen3-VL Technical Report, Table 4](https://arxiv.org/pdf/2511.21631v2#page=18).
 
 ## 7. 격차 분석
 
-_(1000 char 이내로 작성 - Official 성능과 차이가 발생하는지, 그렇다면 그 이유를 서술. 길게 쓴다고 credit이 느는 게
-아니라, 근거의 질이 핵심입니다. 레포트는 짧을수록 좋습니다.)_
+본 평가의 52.00%(468/900)는 공식 67.4%보다 15.40%p 낮다. 오답 432개 중 316개는 선택지 한 글자를 출력했지만 틀린 경우로, 답 추출 실패만으로 설명되지 않는다. **가장 의심되는 원인은 즉답 요구가 계산·추론 문항에 불리하게 작용했을 가능성이다.** [공식 보고서][official-report] · [응답 원문][response-record]
 
+사용한 Instruct 모델의 현재 실행에는 풀이를 별도로 생성하고 숨기는 단계가 없다. 모델은 생성한 중간 계산을 다음 답변 생성에 활용할 수 있으므로, 정답만 요구하는 지시는 이 기회를 제한한다. 따라서 “내부에서 충분히 풀고 답만 출력할 것”이라는 가정은 보장되지 않는다. [모델 응답 템플릿][instruct-template] · [CoT 연구][cot-paper]
+
+이를 점검하려고 정상 종료한 오답 10개와 정답 2개를 재실행했다. 기존 지시에서는 12개 응답이 모두 재현됐다. 같은 이미지·greedy·512토큰에서 풀이를 허용하자 오답 5개가 정답으로 바뀌었고, 그중 4개는 계산 과정도 맞았다. 화학 문항에서는 기존의 126.14g 대신 0.350×0.500×74.093을 계산해 정답 12.97g을 냈다. [오답 진단 기록][diagnostic-record]
+
+다만 풀이를 허용한 12문항 중 6문항이 잘렸고, 기존 정답 1개도 오답이 됐다. **풀이 지시와 출력 예산을 함께 조정해야 한다는 근거다.** 다만 오답 위주로 고른 12문항의 개선을 전체 점수 상승폭으로 환산할 수는 없다. [진단 기록][diagnostic-record] · [문항별 채점 기록][failure-record]
 
 ## 8. 기타 특이사항 / 한계 (Optional)
 
-_(재현 중 겪은 문제, 시간 관계상 못 해본 것, 다음에 시도해보고 싶은 것 등. 자유롭게)_
+- **2048토큰은 반복 평가에 쓸 시간 예산을 넘었다.** 사전 실험에서 생성 시간은 512토큰의 2154.1초(35.9분)에서 2048토큰의 4907.6초(81.8분)로 약 2.28배 늘었다. 한 번 생성에 약 82분이 드는 설정은 여러 체크포인트를 비교해야 하는 이번 작업의 시간 예산에 맞지 않는다고 판단했다. 따라서 2048보다 큰 예산과 Qwen 공개 설정의 32768토큰은 실행하지 못했다. [Qwen 실행 설정][qwen-recipe]
+- **추가 검증 범위가 제한됐다.** 최근 비교는 세 조건을 각 1회 실행했다. 이미지 하한 64토큰은 256토큰보다 생성 시간을 22.7초 줄였지만 정답도 10개 줄어, 현재는 256토큰을 유지했다. 이미지 상한은 모두 2048토큰으로 고정해 상한 확대 효과는 측정하지 못했다. 또한 Qwen의 temperature 0.7과 이번 평가의 0.0을 같은 조건에서 비교하지 않아 sampling 효과를 수치로 분리할 수 없다. [세 조건 비교 기록][three-record] · [Qwen 실행 설정][qwen-recipe]
+- **다음 실험에서는 한 번에 한 조건만 바꿀 계획이다.** 우선 현재 프롬프트와 512토큰 예산을 유지한 채 temperature 0.0과 0.7을 비교하고, 이후 이미지 상한 2048토큰의 확대 여부를 검토한다. 정확도뿐 아니라 출력 한도 도달 문항 수와 생성 시간도 함께 기록한다. 파인튜닝 전후 비교에는 이 보고서의 평가 조건을 동일하게 적용한다.
+
+[official-report]: https://arxiv.org/pdf/2511.21631v2#page=18
+[baseline-record]: ../results/baseline_greedy4_hf/scores.json
+[budget-record]: ../results/base_greedy6_mc_official_prompt_2048/comparison_summary.json
+[three-record]: ../results/analysis_20260928_latest_three/analysis.md
+[qwen-recipe]: https://github.com/QwenLM/Qwen3-VL/blob/96588727e44c78b25ba03ea03b8e12f7e64fd0da/evaluation/mmmu/infer_instruct.sh
+
+[failure-record]: ../results/baseline_greedy4_hf/per_sample.csv
+[response-record]: ../results/baseline_greedy4_hf/predictions.jsonl
+
+[diagnostic-record]: ../results/diagnostic_answer_reasoning/analysis.md
+
+[instruct-template]: https://huggingface.co/Qwen/Qwen3-VL-4B-Instruct/blob/ebb281ec70b05090aa6165b016eac8ec08e71b17/chat_template.json
+[cot-paper]: https://arxiv.org/abs/2201.11903

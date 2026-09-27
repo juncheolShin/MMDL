@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Download the MMMU val data and Qwen3-VL-4B-Instruct at pinned versions into <repo>/data and <repo>/models,
+# Download Qwen3-VL-4B-Instruct at its pinned revision into <repo>/models,
 # verifying every file's SHA-256. Safe to re-run: files that already verify are skipped.
 set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
@@ -17,17 +17,6 @@ fetch() {  # fetch <url> <dest> <sha256> [extra curl args]
   mv "$dest.part" "$dest" || return 1
   echo "$sum  $dest" | sha256sum -c -
 }
-
-# VLMEvalKit's MMMU_DEV_VAL.tsv (MD5 585e8ad75e73f75dcad265dfd0417d64). Its server's TLS certificate had expired
-# on 2026-09-24, so this falls back to -k; the SHA-256 check is what authenticates the file.
-TSV_URL=https://opencompass.openxlab.space/utils/VLMEval/MMMU_DEV_VAL.tsv
-TSV_SHA=cae0445a60c2a22f29cb9df43d2d97671baa8d5921df5d8667f4f3b1f643a478
-fetch "$TSV_URL" "$ROOT/data/MMMU_DEV_VAL.tsv" "$TSV_SHA" 2>/dev/null \
-  || fetch "$TSV_URL" "$ROOT/data/MMMU_DEV_VAL.tsv" "$TSV_SHA" -k
-
-# Official MMMU val answers (MMMU-Benchmark/MMMU mmmu/answer_dict_val.json)
-fetch https://raw.githubusercontent.com/MMMU-Benchmark/MMMU/268471d0d488258990025331c7528359c324aa25/mmmu/answer_dict_val.json \
-  "$ROOT/data/mmmu_answer_dict_val.json" 76080f5597b8f4d29abba8551489c4b82e4a285b9d62b946fd67a1952e95502c
 
 # Qwen/Qwen3-VL-4B-Instruct at a fixed revision
 REV=ebb281ec70b05090aa6165b016eac8ec08e71b17
