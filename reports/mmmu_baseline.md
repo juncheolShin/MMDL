@@ -14,8 +14,8 @@
 | 모델 checkpoint | `Qwen/Qwen3-VL-4B-Instruct` (ebb281ec70b05090aa6165b016eac8ec08e71b17) |
 | 추론 백엔드 |  vLLM, 0.11.2 |
 | 사용 GPU | _(RTX3090, 24GB)_ |
-| 실측 peak VRAM | _(GB)_ |
-| 총 소요 시간 | 6분 10초 |
+| 실측 peak VRAM | 21GB |
+| 총 소요 시간 | 약 6분 10초 |
 | 의존성 | _(requirements.txt / environment.yml 경로 링크)_ |
 | 실행 커맨드 | ```bash\n_(모델 checkpoint 위치와 MMMU 데이터 위치가 인자로 드러나야 함 — 예: --model_path <경로 또는 HF repo id> --data_root <MMMU 데이터 경로>. 하드코딩된 절대경로 대신 인자/환경변수로 받아서, 채점자가 자기 경로만 바꿔 끼우면 그대로 재현되게 작성)_\n``` |
 
@@ -83,37 +83,37 @@ Pick the single best choice from the list above.
 
 | No. | Subject | Data Num | Acc |
 |---|---|---|---|
-| 1 | Accounting | 30 | |
-| 2 | Agriculture | 30 | |
-| 3 | Architecture_and_Engineering | 30 | |
-| 4 | Art | 30 | |
-| 5 | Art_Theory | 30 | |
-| 6 | Basic_Medical_Science | 30 | |
-| 7 | Biology | 30 | |
-| 8 | Chemistry | 30 | |
-| 9 | Clinical_Medicine | 30 | |
-| 10 | Computer_Science | 30 | |
-| 11 | Design | 30 | |
-| 12 | Diagnostics_and_Laboratory_Medicine | 30 | |
-| 13 | Economics | 30 | |
-| 14 | Electronics | 30 | |
-| 15 | Energy_and_Power | 30 | |
-| 16 | Finance | 30 | |
-| 17 | Geography | 30 | |
-| 18 | History | 30 | |
-| 19 | Literature | 30 | |
-| 20 | Manage | 30 | |
-| 21 | Marketing | 30 | |
-| 22 | Materials | 30 | |
-| 23 | Math | 30 | |
-| 24 | Mechanical_Engineering | 30 | |
-| 25 | Music | 30 | |
-| 26 | Pharmacy | 30 | |
-| 27 | Physics | 30 | |
-| 28 | Psychology | 30 | |
-| 29 | Public_Health | 30 | |
-| 30 | Sociology | 30 | |
-| | **Overall (macro avg)** | **900** | |
+| 1 | Accounting | 30 | 53.3% |
+| 2 | Agriculture | 30 | 50.0% |
+| 3 | Architecture_and_Engineering | 30 | 36.7% |
+| 4 | Art | 30 | 70.0% |
+| 5 | Art_Theory | 30 | 80.0% |
+| 6 | Basic_Medical_Science | 30 | 66.7% |
+| 7 | Biology | 30 | 56.7% |
+| 8 | Chemistry | 30 | 40.0% |
+| 9 | Clinical_Medicine | 30 | 63.3% |
+| 10 | Computer_Science | 30 | 50.0% |
+| 11 | Design | 30 | 80.0% |
+| 12 | Diagnostics_and_Laboratory_Medicine | 30 | 33.3% |
+| 13 | Economics | 30 | 50.0% |
+| 14 | Electronics | 30 | 40.0% |
+| 15 | Energy_and_Power | 30 | 50.0% |
+| 16 | Finance | 30 | 36.7% |
+| 17 | Geography | 30 | 56.7% |
+| 18 | History | 30 | 70.0% |
+| 19 | Literature | 30 | 83.3% |
+| 20 | Manage | 30 | 50.0% |
+| 21 | Marketing | 30 | 63.3% |
+| 22 | Materials | 30 | 23.3% |
+| 23 | Math | 30 | 40.0% |
+| 24 | Mechanical_Engineering | 30 | 40.0% |
+| 25 | Music | 30 | 30.0% |
+| 26 | Pharmacy | 30 | 73.3% |
+| 27 | Physics | 30 | 40.0% |
+| 28 | Psychology | 30 | 73.3% |
+| 29 | Public_Health | 30 | 50.0% |
+| 30 | Sociology | 30 | 53.3% |
+| | **Overall (macro avg)** | **900** | **53.4% (481/900)** |
 
 계산식: `Overall = mean(30개 과목 accuracy)` _(다른 방식을 썼다면 명시)_
 
@@ -123,7 +123,7 @@ Pick the single best choice from the list above.
 |---|---|
 | 공식 (Qwen3-VL Technical Report) | 67.4 |
 | 우리 재현 결과 | 53.4 |
-| 차이 (Δ) |14.0 |
+| 차이 (Δ) |-14.0 |
 
 ## 7. 격차 분석
 
