@@ -12,16 +12,18 @@
 | `prompt_check/prompt_tokens.csv` | `code/eval/check_prompts.py` | 문항별 이미지 크기와 프롬프트 토큰 수 |
 | `pipeline_validation/official_parity.txt` | `code/eval/tests/check_official_parity.py` | MMMU 공식 스크립트와의 대조 결과 |
 
-## 기준 평가 설정 (`configs/rtx4090.toml`)
+## 기준 평가 설정 (`configs/evaluation.toml`)
+
+데이터 버전과 출력 토큰 한도는 모든 평가에서 고정합니다. 성능 향상은 이 조건 안에서 찾습니다.
 
 | 항목 | 값 |
 |---|---|
 | Base model | `Qwen/Qwen3-VL-4B-Instruct` @ `ebb281ec70b05090aa6165b016eac8ec08e71b17` |
-| 평가 데이터 | MMMU val 900문항 (객관식 847, 주관식 53). VLMEvalKit `MMMU_DEV_VAL.tsv`(MD5 `585e8ad7…`), 정답은 `MMMU-Benchmark/MMMU@268471d`의 `answer_dict_val.json` |
+| 평가 데이터 | MMMU val 900문항 (객관식 847, 주관식 53). Hugging Face Hub `MMMU/MMMU` @ `98e6ac0cb9b7b2cd2c991b85a50762edc4aedc68` 하나만 씁니다(`code/eval/mmmu_data.py`). 예전 VLMEvalKit TSV와 MMMU 저장소의 `answer_dict_val.json`은 5문항이 달라(Art_Theory_4·Design_15의 정답, Materials_25·Math_2·Math_12의 선택지) 섞어 쓰지 않습니다 |
 | 프롬프트 p | 2026-09-25 회의 합의안: 객관식은 `Question/Options` 뒤 한 글자 답 지시, 주관식은 마지막 `Final answer:` 줄 지시. 모델 chat template을 적용하고 이미지를 텍스트 앞에 둠. 이미지는 262,144–2,097,152픽셀로 조정 |
 | 디코딩 | `greedy`(temperature 0, 실험 비교용) / `qwen_official`(T=0.7, top-p 0.8, top-k 20, presence 1.5; 별도 비교용). 기본은 greedy |
-| 생성 길이 | `max_new_tokens` 512, `max_model_len` 8192, vLLM seed 0, `max_num_seqs` 2, GPU 메모리 사용 목표 0.85 |
-| 채점 g | **structured**(주 지표): 최종 답 선언을 읽고, 무작위 추측 없이 정규화 후 exact match. **official**(참고): MMMU 공식 파서 |
+| 생성 길이 | `max_new_tokens` 512(고정), `max_model_len` 8192, vLLM seed 0, `max_num_seqs` 2, GPU 메모리 사용 목표 0.85 |
+| 채점 g | **structured**(주 지표): 최종 답 선언을 읽고, 무작위 추측 없이 정규화 후 exact match. 출력 한도에 걸려 잘린 응답은 모델이 명시한 답(`\boxed{}`, `Answer: C` 같은 답 선언, 첫머리의 선택지 글자)만 인정하고, 없으면 오답입니다. **official**(참고): MMMU 공식 파서 |
 
 Fine-tuned 체크포인트도 위 설정 그대로 평가합니다(`MODEL_PATH`만 바꿈). 파라미터를 바꾸는 실험은 TOML을 복사해 이름을 바꾸고, 해당 설정의 baseline도 다시 측정합니다. 각 run의 설정 값과 파일 해시는 `run_config.json`에 남습니다.
 
@@ -55,4 +57,4 @@ Fine-tuned 체크포인트도 위 설정 그대로 평가합니다(`MODEL_PATH`�
 
 새 프롬프트·이미지 면적 설정과 생성 한도(512)에서는 `check_prompts.py`로 토큰 길이를 다시 측정해야 합니다. 위 표는 기존 원본 설정의 기록이며 새 설정의 실측 결과로 간주하지 않습니다.
 
-**데이터 수정**: pandas가 `validation_Geography_15`의 선택지 D `"None"`(정답)을 결측값으로 읽습니다. 그래서 원본 Qwen 코드에서는 이 문항이 프롬프트에서 정답 선택지를 잃습니다. 로더에서 원래 값으로 복원하고 `run_config.json`에 기록합니다(`code/third_party/SOURCES.md`).
+**데이터 수정 (예전 TSV 로더)**: pandas가 TSV의 `validation_Geography_15` 선택지 D `"None"`(정답)을 결측값으로 읽어, 원본 Qwen 코드에서는 이 문항이 정답 선택지를 잃었습니다. 지금의 Hub 로더는 D를 `"None"` 문자열로 그대로 읽습니다.

@@ -4,7 +4,7 @@ import tempfile
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
-from configuration import DEFAULT_CONFIG, EVALUATION_TYPES, TRAINING_TYPES, load_section  # noqa: E402
+from configuration import DEFAULT_CONFIG, DEFAULT_EVALUATION_CONFIG, EVALUATION_TYPES, TRAINING_TYPES, load_section  # noqa: E402
 
 
 evaluation = load_section(DEFAULT_CONFIG, 'evaluation', EVALUATION_TYPES)
@@ -15,6 +15,12 @@ assert evaluation['max_new_tokens'] == 2048
 assert evaluation['min_pixels'] == 256 * 32 * 32
 assert evaluation['max_pixels'] == 2048 * 32 * 32
 assert training['lora_r'] > 0
+
+# The submission profile: every checkpoint is compared under the same fixed output budget.
+submission = load_section(DEFAULT_EVALUATION_CONFIG, 'evaluation', EVALUATION_TYPES)
+assert submission['max_new_tokens'] == 512
+assert submission['temperature'] == 0.0
+assert submission['seed'] == 0
 
 with tempfile.TemporaryDirectory() as directory:
     invalid = Path(directory) / 'invalid.toml'
