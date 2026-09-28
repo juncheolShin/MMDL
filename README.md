@@ -190,6 +190,6 @@ CUDA_VISIBLE_DEVICES= python code/eval/score_mmmu.py results/<run-name>
 
 ### 검증과 기록
 
-기존 CPU 검증은 `python code/eval/tests/test_configuration.py`, `python code/eval/tests/test_answer_extraction.py`, `python code/eval/tests/test_prompting.py`로 반복할 수 있습니다. 프롬프트 점검은 `python code/eval/check_prompts.py --model models/Qwen3-VL-4B-Instruct`입니다. 새 실험은 `results/README.md`의 표에 추가하고 제출 보고서의 실측 칸을 채우세요. 과제 원본 양식은 `reports/references/`에 보존했습니다.
+기존 CPU 검증은 `python code/eval/tests/test_configuration.py`, `python code/eval/tests/test_answer_extraction.py`, `python code/eval/tests/test_prompting.py`로 반복할 수 있습니다. 프롬프트 점검은 `python code/eval/check_prompts.py --model models/Qwen3-VL-4B-Instruct`입니다. 새 실험은 `results/README.md`의 표에 추가하고 제출 보고서의 실측 칸을 채우세요.
 
 협업은 브랜치와 PR을 사용하며 최종 결과물은 `main`에 병합합니다.
