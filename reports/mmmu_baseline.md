@@ -40,7 +40,8 @@ bash code/scripts/run_mmmu_eval.sh \
 
 
 
-`<평가 설정 파일 경로>`에는 3절의 생성 설정을 담은 TOML 파일을 지정한다. 데이터와 이미지는 `--data-path`에 저장한다. 
+`<평가 설정 파일 경로>`에는 3절의 생성 설정을 담은 TOML 파일을 지정한다. 데이터와 이미지는 `--data-path`에 저장한다.   
+아무런 인자를 넣지 않고 실행 시 기본 Qwen 과 evaluation 설정파일을 사용하여 평가를 수행한다. 자세한 default 값은 `code/scripts/run_mmmu_eval.sh` 에서 확인 가능하다.
 
 파인튜닝 작업은 호스트에서 다음 명령으로 같은 컨테이너에 접속해 진행한다.
 
