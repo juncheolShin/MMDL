@@ -18,6 +18,7 @@ The comparison then depends on the format of the ground truth:
 
 Nothing is guessed: a response without a recognizable answer extracts to None and scores as wrong.
 """
+import ast
 import re
 from dataclasses import dataclass
 
@@ -302,6 +303,23 @@ def extract_open(response, answer_type):
             span = sents[0] if len(sents) == 1 else sents[0] + ' || ' + sents[-1]
             return Extraction(span, 'first_and_last_sentence', span=span)
     return Extraction(None, 'unparsed')
+
+
+def parse_ground_truth(ground_truth):
+    """Accepted answers of an open question as a list when there are several.
+
+    MMMU on the Hub stores them as a string, e.g. "['24/7', '3.429']" (validation_Math_15,
+    Geography_4, Chemistry_30); compared as one string, no response can ever match. MMMU's
+    answer_dict_val.json holds the same answers as a list. Anything else is returned unchanged.
+    """
+    if isinstance(ground_truth, str) and ground_truth.strip().startswith('['):
+        try:
+            parsed = ast.literal_eval(ground_truth.strip())
+        except (SyntaxError, ValueError):
+            return ground_truth
+        if isinstance(parsed, list) and parsed and all(isinstance(a, str) for a in parsed):
+            return parsed
+    return ground_truth
 
 
 def answer_type_of(ground_truth):
