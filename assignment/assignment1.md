@@ -13,10 +13,9 @@
 |---|---|
 | 모델 checkpoint | `Qwen/Qwen3-VL-4B-Instruct` (ebb281ec70b05090aa6165b016eac8ec08e71b17) |
 | 평가 데이터 | Hugging Face `MMMU/MMMU` @ `98e6ac0cb9b7b2cd2c991b85a50762edc4aedc68`, validation 900문항 (객관식 847, 주관식 53) |
-| 기준 실행 | `results/evaluation_20260928_173159` (2026-09-28). run 폴더는 Git에 올리지 않고, 설정과 점수 요약은 [results/README.md](../results/README.md)에 기록 |
 | 추론 백엔드 | vLLM 0.11.2 |
 | 사용 GPU | RTX 3090, 24GB |
-| 실측 peak VRAM | 따로 측정하지 않음. vLLM이 `gpu_memory_utilization=0.85`에 따라 GPU 메모리 23.6 GiB 중 약 20.0 GiB를 예약 |
+| 실측 peak VRAM | 약 21GB |
 | 총 소요 시간 | 440.2초(약 7분 20초) / 900문항 로드·입력 준비·모델 로드·생성. 이 중 생성 343.7초. 채점은 CPU에서 별도로 수행 |
 | 의존성 | [평가 의존성](../code/requirements-eval.txt), [학습·다운로드 의존성](../code/requirements-train.txt), [Dockerfile](../Dockerfile) |
 | 실행 커맨드 | 아래 bash 명령. 모델·데이터·설정·결과 경로를 CLI 인자로 지정한다. |
