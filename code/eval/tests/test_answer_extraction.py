@@ -3,7 +3,8 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from answer_extraction import answer_type_of, extract_choice, extract_open, open_is_correct  # noqa: E402
+from answer_extraction import (answer_type_of, extract_choice, extract_open, open_is_correct,  # noqa: E402
+                               parse_ground_truth)
 
 ART8 = {'A': 'Herne Bay, Kent', 'B': 'St Ives, Cornwall', 'C': 'Aldeburgh, Suffolk', 'D': 'Sandown, Isle of Wight'}
 MONEY = {'A': '$63,020', 'B': '$58,410', 'C': '$71,320', 'D': '$77,490'}
@@ -105,9 +106,23 @@ def test_answer_types():
     assert answer_type_of('trans-1-Chloro-4-methylcyclohexane') == 'text'
 
 
+def test_hub_multi_answer_ground_truths():
+    # Hub MMMU stores these three as strings; each must still accept a correct answer.
+    for gt, response in [("['24/7', '3.429']", 'Answer: 24/7'), ("['24/7', '3.429']", 'Answer: 3.43'),
+                         ("['Tampa', 'Florida']", 'Answer: Tampa, Florida'), ("['$MgS$', 'MgS']", 'Answer: MgS')]:
+        parsed = parse_ground_truth(gt)
+        assert isinstance(parsed, list), gt
+        atype = answer_type_of(parsed)
+        assert open_is_correct(extract_open(response, atype), parsed, atype), (gt, response)
+    assert not open_is_correct(extract_open('Answer: 5', 'number'), parse_ground_truth("['24/7', '3.429']"), 'number')
+    # Left unchanged: single answers, and bracketed text that is not a list of strings.
+    for gt in ('1.06', 'C', 'Transformation', '[0, 1]', '[incomplete'):
+        assert parse_ground_truth(gt) == gt
+
+
 if __name__ == '__main__':
     ok = True
-    for fn in (test_answer_types, test_multiple_choice, test_open):
+    for fn in (test_answer_types, test_multiple_choice, test_open, test_hub_multi_answer_ground_truths):
         try:
             fn()
             print(f'PASS {fn.__name__}')

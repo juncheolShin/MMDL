@@ -19,7 +19,7 @@ import random
 import sys
 from pathlib import Path
 
-from answer_extraction import answer_type_of, extract_choice, extract_open, open_is_correct
+from answer_extraction import answer_type_of, extract_choice, extract_open, open_is_correct, parse_ground_truth
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 
@@ -114,6 +114,14 @@ def main():
     answers = evaluation_data['samples']
     if len(preds) != 900 or len({p['id'] for p in preds}) != 900 or set(answers) != {p['id'] for p in preds}:
         raise SystemExit('evaluation requires 900 unique predictions matching the loaded dataset')
+    # Done here rather than in the loader so runs recorded before this fix score correctly too.
+    multi_answer_ids = []
+    for sample_id, gt in answers.items():
+        if gt['question_type'] != 'multiple-choice':
+            parsed = parse_ground_truth(gt['ground_truth'])
+            if parsed is not gt['ground_truth']:
+                gt['ground_truth'] = parsed
+                multi_answer_ids.append(sample_id)
     from third_party.mmmu_official.data_utils import DOMAIN_CAT2SUB_CAT as domains
 
     st = score_structured(preds, answers)
@@ -137,6 +145,7 @@ def main():
             'random_fallbacks': sum(off[i]['random_fallback'] for i in ids),
         },
         'mc_extractor_disagreements': len(disagree),
+        'multi_answer_ground_truths': sorted(multi_answer_ids),
         'generation': {
             'finish_reason': dict(collections.Counter(p['finish_reason'] for p in preds)),
             'output_tokens_mean': sum(n_tokens) / len(n_tokens),
