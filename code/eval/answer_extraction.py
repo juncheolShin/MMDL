@@ -17,6 +17,9 @@ The comparison then depends on the format of the ground truth:
   open / text      the ground-truth phrase appears in the answer span.
 
 Nothing is guessed: a response without a recognizable answer extracts to None and scores as wrong.
+A response cut by the output token limit (finish_reason 'length') keeps only an answer the model
+stated itself (\\boxed{...}, an answer statement, or the letter it opened with); the fallback rules
+that read option text or a lone letter elsewhere would otherwise pick them out of unfinished reasoning.
 """
 import ast
 import re
@@ -119,6 +122,22 @@ _CORRECT_MARK = re.compile(r'[✅✔✓☑]|(?<!not )(?<!in)\b(?i:correct)\b')
 _WEAK_LETTER = re.compile(r'(?<![A-Za-z0-9])[\(\[]?([B-H])[\)\]]?(?![A-Za-z0-9\'’])')
 
 
+def _lone_letter(span):
+    """The letter when the first non-empty line of `span` holds nothing but one letter, in either case:
+    "Answer: a", "(b).". Lower case is read only here, where it cannot be the article "a"."""
+    line = next((l for l in span.split('\n') if l.strip()), '')
+    m = re.fullmatch(r'[\s:\-–—>"\'“”(\[]*([A-Za-z])[\s)\].!?"\'”]*', line)
+    return m.group(1).upper() if m else None
+
+
+def _stated_letter(span, valid, options):
+    """Letter at the start of the text after an answer statement or inside \\boxed{}."""
+    letter = _letter_at(span, valid, options)
+    if not letter and _lone_letter(span) in valid:
+        letter = _lone_letter(span)
+    return letter
+
+
 def _is_answer_not_listing(text, letter, valid, options):
     """A response opening with "A. ..." answers A, unless it walks through the options line by line.
     Then only a first line holding nothing but the letter (and its option text) counts, and not when
@@ -142,17 +161,18 @@ class Extraction:
     span: str = ''        # text the answer was read from (for auditing)
 
 
-def extract_choice(response, options):
-    """Multiple choice: option letter or None. `options` maps letter -> option text."""
+def extract_choice(response, options, truncated=False):
+    """Multiple choice: option letter or None. `options` maps letter -> option text.
+    `truncated`: the response hit the output token limit (see the module docstring)."""
     text = clean(response)
     valid = set(options)
     stated = []  # (position, letter, method)
     for pos, content in boxed_spans(text):
-        letter = _letter_at(content, valid, options)
+        letter = _stated_letter(content, valid, options)
         if letter:
             stated.append((pos, letter, 'boxed'))
     for m in _MC_STATEMENT.finditer(text):
-        letter = _letter_at(text[m.end():], valid, options)
+        letter = _stated_letter(text[m.end():], valid, options)
         if letter:
             stated.append((m.start(), letter, 'statement'))
     for m in _LETTER_IS_CORRECT.finditer(text):
@@ -165,6 +185,10 @@ def extract_choice(response, options):
     letter = _letter_at(text, valid, options)
     if letter and _is_answer_not_listing(text, letter, valid, options):
         return Extraction(letter, 'leading_letter', span=text[:120])
+    if '\n' not in text.strip() and _lone_letter(text) in valid:
+        return Extraction(_lone_letter(text), 'bare_letter', span=text[:120])
+    if truncated:
+        return Extraction(None, 'truncated_no_answer')
 
     marked = {m.group(1) for m in _MARKED_LINE.finditer(text) if m.group(1) in valid and _CORRECT_MARK.search(m.group(0))}
     if len(marked) == 1:
@@ -243,6 +267,8 @@ def _sentences(text):
 
 
 def _label_in(span):
+    if _lone_letter(span):
+        return _lone_letter(span)
     m = _LABEL_NOUN.search(span)
     if m:
         return m.group(1).upper()
@@ -270,15 +296,17 @@ def answer_spans(response):
     return text, spans
 
 
-def extract_open(response, answer_type):
-    """Open question: float (number), letter (label), or answer span (text), by the ground truth's format."""
+def extract_open(response, answer_type, truncated=False):
+    """Open question: float (number), letter (label), or answer span (text), by the ground truth's format.
+    `truncated`: the response hit the output token limit; only \\boxed{} and answer statements count."""
     text, spans = answer_spans(response)
+    sentences = [] if truncated else _sentences(text)
     if answer_type == 'number':
         for method, span in spans:
             v = _pick_number(span)
             if v:
                 return Extraction(v, method, span=span)
-        for sent in reversed(_sentences(text)):
+        for sent in reversed(sentences):
             v = _pick_number(sent)
             if v:
                 return Extraction(v, 'last_sentence_with_number', span=sent)
@@ -290,19 +318,18 @@ def extract_open(response, answer_type):
             letter = _label_in(span)
             if letter:
                 return Extraction(letter, method, span=span)
-        for sent in reversed(_sentences(text)):
+        for sent in reversed(sentences):
             letter = _label_in(sent)
             if letter:
                 return Extraction(letter, 'last_sentence_with_label', span=sent)
     else:
         if spans:
             return Extraction(spans[0][1], spans[0][0], span=spans[0][1])
-        sents = _sentences(text)
-        if sents:
+        if sentences:
             # No explicit statement: answer-first ("The place is Tampa, Florida. ...") or answer-last.
-            span = sents[0] if len(sents) == 1 else sents[0] + ' || ' + sents[-1]
+            span = sentences[0] if len(sentences) == 1 else sentences[0] + ' || ' + sentences[-1]
             return Extraction(span, 'first_and_last_sentence', span=span)
-    return Extraction(None, 'unparsed')
+    return Extraction(None, 'truncated_no_answer' if truncated else 'unparsed')
 
 
 def parse_ground_truth(ground_truth):

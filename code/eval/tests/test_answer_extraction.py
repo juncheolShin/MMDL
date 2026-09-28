@@ -43,6 +43,10 @@ MC_CASES = [
     ('I would choose', 'Given the coastline shape, I would choose B.', ART8, 'B'),
     ('answer is not X', 'The answer is not A; the sculpture is in Aldeburgh, Suffolk.', ART8, 'C'),
     ('answer line then option walk-through', 'C. Aldeburgh, Suffolk\n\nA. Herne Bay, Kent is in the south-east.\nB. St Ives is in Cornwall.', ART8, 'C'),
+    ('lower-case letter after statement', 'Answer: c', ART8, 'C'),
+    ('lower-case letter in parentheses', 'The answer is (d).', ART8, 'D'),
+    ('lower-case letter alone', 'c', ART8, 'C'),
+    ('lower-case article is not a letter', 'The answer is a coastal town: Aldeburgh, Suffolk.', ART8, 'C'),
 ]
 
 # (name, response, ground truth, expected correct)
@@ -69,12 +73,32 @@ OPEN_CASES = [
     ('label, statement', 'The regioselective step is reaction B.\n\nAnswer: B', 'B', True),
     ('label, lower case after noun (LLaVA, Pharmacy_19)', 'Step b', 'B', True),
     ('label, bare letter', 'a', 'A', True),
+    ('label, lower case after statement (Basic_Medical_Science_10)', 'Answer: a', 'A', True),
+    ('label, lower case in parentheses', 'The answer is (c).', 'C', True),
+    ('label, article after statement is not a label', 'Answer: a hydrogen bond', 'A', False),
     ('label, a word is not a label', 'Right', 'C', False),
     ('label, nothing to read', 'I cannot determine this.', 'A', False),
     ('text, statement', 'The answer is: **Transformation**', 'Transformation', True),
     ('text, answer first', 'The place described in the image is Tampa, Florida. It is a coastal city.', ['Tampa', 'Florida'], True),
     ('text, latex formula', 'The formula of the compound is therefore $MgS$.', ['$MgS$', 'MgS'], True),
     ('text, wrong', 'The answer is conjugation.', 'Transformation', False),
+]
+
+
+# Responses cut by the token limit: (name, response, options, expected when truncated, expected otherwise).
+TRUNCATED_MC_CASES = [
+    ('stray letter in unfinished reasoning (Mechanical_Engineering_4)',
+     'The bending moment is largest somewhere between A and B. At position x from A, M(x) = R_A x -', MONEY, None, 'B'),
+    ('option text in unfinished reasoning', 'Summing the rows gives $77,490 so far, but the tax line still has to be', MONEY, None, 'D'),
+    ('stated answer before the cut', 'The answer is D.\n\nExplanation: summing the rows gives $77,490, and the tax line', MONEY, 'D', 'D'),
+    ('opening letter before the cut', 'D. $77,490\n\nThe rows sum to this total once the tax line is', MONEY, 'D', 'D'),
+]
+# (name, response, ground truth, expected correct when truncated, expected correct otherwise)
+TRUNCATED_OPEN_CASES = [
+    ('number only inside unfinished reasoning', 'First the area: 0.5 x 3 = 1.5. Then the deflection at midspan is', '1.5', False, True),
+    ('stated number before the cut', 'Answer: 1.06 in.\n\nThe summation over 3-ft segments gives', '1.06', True, True),
+    ('label only inside unfinished reasoning', 'Consider arrow C first. It points to the', 'C', False, True),
+    ('text only inside unfinished reasoning', 'The process shown is transformation of the bacteria, where', 'Transformation', False, True),
 ]
 
 
@@ -94,6 +118,22 @@ def test_open():
         got = extract_open(response, atype)
         if open_is_correct(got, gt, atype) != expected:
             failures.append(f'{name}: expected {expected}, got pred={got.pred} via {got.method} ({atype})')
+    assert not failures, '\n'.join(failures)
+
+
+def test_truncated():
+    failures = []
+    for name, response, options, if_cut, if_finished in TRUNCATED_MC_CASES:
+        for truncated, expected in ((True, if_cut), (False, if_finished)):
+            got = extract_choice(response, options, truncated)
+            if got.pred != expected:
+                failures.append(f'{name} (truncated={truncated}): expected {expected}, got {got.pred} via {got.method}')
+    for name, response, gt, if_cut, if_finished in TRUNCATED_OPEN_CASES:
+        atype = answer_type_of(gt)
+        for truncated, expected in ((True, if_cut), (False, if_finished)):
+            got = extract_open(response, atype, truncated)
+            if open_is_correct(got, gt, atype) != expected:
+                failures.append(f'{name} (truncated={truncated}): expected {expected}, got pred={got.pred} via {got.method}')
     assert not failures, '\n'.join(failures)
 
 
@@ -122,7 +162,7 @@ def test_hub_multi_answer_ground_truths():
 
 if __name__ == '__main__':
     ok = True
-    for fn in (test_answer_types, test_multiple_choice, test_open, test_hub_multi_answer_ground_truths):
+    for fn in (test_answer_types, test_multiple_choice, test_open, test_truncated, test_hub_multi_answer_ground_truths):
         try:
             fn()
             print(f'PASS {fn.__name__}')
