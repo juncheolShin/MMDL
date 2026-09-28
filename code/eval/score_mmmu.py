@@ -2,7 +2,8 @@
 
 Two extractors turn each response r_n into r̂_n:
   structured  answer_extraction.py (primary). Reads the response's final answer statement, so long
-              explanatory answers are handled; never guesses (unparsed = wrong, and counted).
+              explanatory answers are handled; never guesses (unparsed = wrong, and counted). A response
+              cut by the token limit counts only if it stated its answer before the cut.
   official    MMMU's parse_multi_choice_response / parse_open_response + evaluate, kept as a reference
               point. It targets short "letter only" answers and guesses randomly when it finds nothing.
 
@@ -66,14 +67,15 @@ def score_structured(preds, answers):
     rows = {}
     for p in preds:
         gt = answers[p['id']]
+        truncated = p['finish_reason'] == 'length'
         if gt['question_type'] == 'multiple-choice':
             atype = 'choice'
-            ex = extract_choice(p['response'], gt['options'])
+            ex = extract_choice(p['response'], gt['options'], truncated)
             correct = ex.pred == gt['ground_truth']
             pred = ex.pred
         else:
             atype = answer_type_of(gt['ground_truth'])
-            ex = extract_open(p['response'], atype)
+            ex = extract_open(p['response'], atype, truncated)
             correct = open_is_correct(ex, gt['ground_truth'], atype)
             pred = f'{ex.pred[0]:g}{"%" if ex.pred[1] else ""}' if atype == 'number' and ex.pred else ex.pred
         rows[p['id']] = {'answer_type': atype, 'pred': pred, 'method': ex.method, 'conflict': ex.conflict,
