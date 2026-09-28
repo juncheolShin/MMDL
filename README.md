@@ -1,6 +1,6 @@
 # MMDL: 2026-2 멀티모달딥러닝 10조
 
-Qwen3-VL-4B-Instruct를 별도 학습 데이터로 LoRA 파인튜닝하고, 같은 조건에서 MMMU validation 성능을 비교하는 프로젝트입니다. 제출 보고서의 항목은 [`reports/mmmu_baseline.md`](reports/mmmu_baseline.md)에 맞췄습니다.
+Qwen3-VL-4B-Instruct를 별도 학습 데이터로 LoRA 파인튜닝하고, 같은 조건에서 MMMU validation 성능을 비교하는 프로젝트입니다. 첫 번째 과제 보고서(MMMU val baseline 평가)는 [`assignment/assignment1.md`](assignment/assignment1.md)입니다.
 
 > **데이터 분리:** MMMU와 MMMU-Pro의 모든 split은 평가 전용입니다. 학습에 사용하지 않습니다. `code/train/train_lora.py`는 평가 데이터 폴더와 MMMU 이름의 입력을 거부합니다.
 
@@ -8,6 +8,7 @@ Qwen3-VL-4B-Instruct를 별도 학습 데이터로 LoRA 파인튜닝하고, 같�
 
 | 경로 | 내용 |
 |---|---|
+| `assignment/` | 과제 보고서 (`assignment1.md`: MMMU val baseline 평가) |
 | `Dockerfile` | CUDA 12.8, Python 3.12, 고정 패키지, 모델·평가 데이터가 포함된 이미지 |
 | `code/eval/` | 보고서의 고정 프롬프트 기반 vLLM 추론, MMMU 채점, 검증 코드 |
 | `code/eval/mmmu_data.py` | 지정 revision의 30개 과목 로딩·문항 수 확인·이미지 저장 |
@@ -17,7 +18,6 @@ Qwen3-VL-4B-Instruct를 별도 학습 데이터로 LoRA 파인튜닝하고, 같�
 | `configs/rtx4090.toml` | LoRA 학습 설정 |
 | `code/third_party/` | 공식 이미지 입력 처리 함수·참조 파서와 출처 |
 | `results/` | 실험 설정·원문 응답·채점 결과 (Git 제외) |
-| `reports/` | 제출 보고서·요약 증거·과제 원본 양식 |
 
 ## 재현 환경
 
