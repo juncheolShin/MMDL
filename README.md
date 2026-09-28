@@ -14,7 +14,7 @@ Qwen3-VL-4B-Instruct를 별도 학습 데이터로 LoRA 파인튜닝하고, 같�
 | `code/train/` | Qwen 공식 멀티모달 trainer를 호출하는 LoRA 학습·병합 코드 |
 | `code/scripts/` | 에셋 다운로드 및 한 명령 평가 실행 |
 | `configs/evaluation.toml` | 제출 기준 512토큰 설정 |
-| `configs/rtx4090.toml` | 2048토큰 추가 실험·LoRA 설정 |
+| `configs/rtx4090.toml` | LoRA 학습 설정 |
 | `code/third_party/` | 공식 이미지 입력 처리 함수·참조 파서와 출처 |
 | `results/` | 실험 설정·원문 응답·채점 결과 (Git 제외) |
 | `reports/` | 제출 보고서·요약 증거·과제 원본 양식 |
@@ -73,7 +73,7 @@ bash code/scripts/run_mmmu_eval.sh
 | `--out-root` | `OUT_ROOT` | `/opt/mmdl/results` | 결과를 저장할 상위 폴더 |
 | `--overwrite` | — | 사용 안 함 | 지정한 결과 폴더의 기존 응답 덮어쓰기 |
 
-표의 경로는 기본 프로젝트 위치 기준이며 모두 컨테이너 내부 경로입니다. `CONTAINER_ROOT`를 바꾸면 생략한 경로도 그 아래를 기준으로 정합니다. 기준 설정은 greedy, seed 0, 최대 512 생성 토큰, 이미지당 262144~2097152픽셀입니다. 파인튜닝 전후 비교에는 같은 설정과 고정된 프롬프트를 사용합니다. `configs/rtx4090.toml`은 2048토큰 추가 실험 설정이므로 혼용하지 않습니다.
+표의 경로는 기본 프로젝트 위치 기준이며 모두 컨테이너 내부 경로입니다. `CONTAINER_ROOT`를 바꾸면 생략한 경로도 그 아래를 기준으로 정합니다. 기준 설정은 greedy, seed 0, 최대 512 생성 토큰, 이미지당 262144~2097152픽셀입니다. 파인튜닝 전후 비교에는 같은 설정과 고정된 프롬프트를 사용합니다. `configs/rtx4090.toml`은 LoRA 학습 설정이며 평가에는 사용하지 않습니다.
 
 예를 들어 학습 후 병합한 모델은 호스트에서 다음과 같이 평가합니다.
 
