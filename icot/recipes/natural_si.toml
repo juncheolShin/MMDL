@@ -1,0 +1,22 @@
+[training]
+full_learning_rate = 0.0001
+si_learning_rate = 0.00001
+gradient_accumulation_steps = 4
+per_device_train_batch_size = 1
+lora_r = 8
+lora_alpha = 16
+lora_dropout = 0.05
+min_pixels = 262144
+max_pixels = 2097152
+model_max_length = 8192
+
+[experiment]
+seed = 42
+max_grad_norm = 1.0
+threads_per_rank = 2
+
+[curriculum]
+full_epochs = 1
+deletion_epochs = 2
+answer_only_epochs = 1
+smoothing_lambda = 4.0

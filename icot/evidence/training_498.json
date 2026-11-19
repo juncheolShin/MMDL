@@ -1,0 +1,73 @@
+{
+  "steps": [
+    {
+      "epoch": 1,
+      "ids": [
+        "geometry3k_train_1599",
+        "geometry3k_train_0671",
+        "geometry3k_train_1468",
+        "geometry3k_train_0245"
+      ],
+      "mean_loss": 0.5409778244793415,
+      "gradient_norm": 3.863734245300293
+    },
+    {
+      "epoch": 1,
+      "ids": [
+        "geometry3k_train_1826",
+        "geometry3k_train_2072",
+        "geometry3k_train_1595",
+        "geometry3k_train_1015"
+      ],
+      "mean_loss": 0.2770131565630436,
+      "gradient_norm": 4.831380367279053
+    },
+    {
+      "epoch": 1,
+      "ids": [
+        "geometry3k_train_1666",
+        "chartqa_human_05173",
+        "chartqa_human_04823",
+        "geometry3k_train_1995"
+      ],
+      "mean_loss": 0.753644198179245,
+      "gradient_norm": 3.7252395153045654
+    },
+    {
+      "epoch": 2,
+      "ids": [
+        "geometry3k_train_1995",
+        "chartqa_human_04823",
+        "geometry3k_train_1826",
+        "geometry3k_train_1015"
+      ],
+      "mean_loss": 1.2489924281835556,
+      "gradient_norm": 10.30755615234375
+    },
+    {
+      "epoch": 2,
+      "ids": [
+        "geometry3k_train_1595",
+        "geometry3k_train_2072",
+        "geometry3k_train_0245",
+        "geometry3k_train_0671"
+      ],
+      "mean_loss": 1.6611913964152336,
+      "gradient_norm": 12.937460899353027
+    },
+    {
+      "epoch": 2,
+      "ids": [
+        "geometry3k_train_1599",
+        "geometry3k_train_1468",
+        "geometry3k_train_1666",
+        "chartqa_human_05173"
+      ],
+      "mean_loss": 1.002622827887535,
+      "gradient_norm": 6.013663291931152
+    }
+  ],
+  "trainable": 5898240,
+  "first_epoch_max_loss_delta": 0.010542541742324829,
+  "parent_sha256": "970e782ef06526c3634c3565a072f7019b4de827591bbab59736ac3e59701c14"
+}

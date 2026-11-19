@@ -1,0 +1,47 @@
+id,subject,scored_prediction,gold
+validation_Architecture_and_Engineering_14,Architecture_and_Engineering,0.36,1.06
+validation_Basic_Medical_Science_10,Basic_Medical_Science,,C
+validation_Basic_Medical_Science_14,Basic_Medical_Science, Genetic engineering,Transformation
+validation_Biology_10,Biology,0.5,1/64
+validation_Chemistry_13,Chemistry,126.14,12.97
+validation_Chemistry_19,Chemistry,2,4
+validation_Chemistry_20,Chemistry,3,5
+validation_Chemistry_23,Chemistry,0.63,6.5
+validation_Chemistry_25,Chemistry,24.3,24.32
+validation_Chemistry_30,Chemistry, M X₂,"['$MgS$', 'MgS']"
+validation_Chemistry_4,Chemistry, cis-1-chloro-2-methylcyclohexane,trans-1-Chloro-4-methylcyclohexane
+validation_Computer_Science_23,Computer_Science,250,253.75
+validation_Computer_Science_26,Computer_Science,155,251
+validation_Electronics_11,Electronics,1.5,0.3
+validation_Electronics_12,Electronics,12,10
+validation_Electronics_16,Electronics,0,20
+validation_Electronics_21,Electronics,1.5,0.9965
+validation_Electronics_24,Electronics,120,551
+validation_Electronics_26,Electronics,1.5,6.333
+validation_Electronics_27,Electronics,150,-120
+validation_Electronics_29,Electronics,12,30
+validation_Electronics_30,Electronics,0,-141
+validation_Electronics_4,Electronics,6.3,8.4
+validation_Electronics_5,Electronics,5.6,62.6
+validation_Electronics_6,Electronics,40,71.6
+validation_Finance_10,Finance,1.5e+06,2000000
+validation_Finance_20,Finance,7.05e+06,7243000
+validation_Finance_23,Finance,1.7642e+08,527.89
+validation_Finance_24,Finance,10,30.0
+validation_Finance_25,Finance,1.8,0.286
+validation_Finance_30,Finance,1000,1249
+validation_Finance_8,Finance,150,360
+validation_Geography_14,Geography,1270,8200
+validation_Geography_22,Geography,2,3
+validation_Geography_4,Geography, Clearwater Beach,"['Tampa', 'Florida']"
+validation_Manage_17,Manage,10,65
+validation_Manage_20,Manage,1050,2960
+validation_Manage_21,Manage,8.6,9.20
+validation_Manage_23,Manage,1462,1464
+validation_Manage_25,Manage,0.8413,0.963
+validation_Manage_3,Manage,234000,242110.62
+validation_Marketing_11,Marketing,0.17,0.10
+validation_Math_15,Math, 12 feet per second,"['24/7', '3.429']"
+validation_Pharmacy_19,Pharmacy,A,B
+validation_Pharmacy_26,Pharmacy,B,A
+validation_Psychology_20,Psychology, 3-4,embryonic

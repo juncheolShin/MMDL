@@ -1,0 +1,13 @@
+id,direction,gold,498,answer
+validation_Accounting_27,recovered,C,B,C
+validation_Computer_Science_8,lost,A,A,C
+validation_Economics_17,lost,A,A,B
+validation_Energy_and_Power_13,lost,C,C,B
+validation_Energy_and_Power_22,recovered,A,C,A
+validation_Materials_1,lost,B,B,A
+validation_Mechanical_Engineering_25,recovered,B,C,B
+validation_Music_1,lost,C,C,A
+validation_Music_19,recovered,B,A,B
+validation_Public_Health_2,lost,A,A,C
+validation_Public_Health_25,lost,D,D,B
+validation_Sociology_20,lost,D,D,B

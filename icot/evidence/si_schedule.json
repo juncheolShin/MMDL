@@ -1,0 +1,37 @@
+{
+  "passed": true,
+  "samples": 96,
+  "checkpoints_sha256": {
+    "16": "9b9757ac051262fce8f798ad7fefd8f5766674a06c09a357908aa93afd7cd7e1",
+    "24": "479379cce185c7e4b7bd09ae2f1586e48dd734b31e1cdbba3a2787c556144597"
+  },
+  "full_parent_sha256": "89df62526d5a6f494e4ef7838a6371824b94285c20aaf0f5f512e921cbbd0748",
+  "scheduled_removal": [
+    0,
+    6,
+    12,
+    18,
+    24,
+    30,
+    36,
+    42,
+    49,
+    55,
+    61,
+    67,
+    73,
+    79,
+    85,
+    91,
+    98,
+    98,
+    98,
+    98,
+    98,
+    98,
+    98,
+    98
+  ],
+  "all_epochs_cover_each_sample_once": true,
+  "final_epoch_is_answer_only": true
+}

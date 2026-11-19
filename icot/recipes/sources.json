@@ -1,0 +1,202 @@
+[
+  {
+    "id": "chartqa_human_05173",
+    "source": "chartqa",
+    "sha": "86e2b7a827b76338245e2ab167d1ba0fe9d4ee1db15c3003018c9ec507d2659c",
+    "image_file": "two_col_41048.png",
+    "options": {
+      "A": "0.6",
+      "B": "0.7",
+      "C": "0.8",
+      "D": "0.5"
+    },
+    "gold": "C",
+    "text_sha256": "654e112e66db463ac89fc8f167b488973bf7a1d53374005de35f015f7b6c0ad5"
+  },
+  {
+    "id": "chartqa_human_04823",
+    "source": "chartqa",
+    "sha": "50f8639d400d5a8e673951304b832ddbe141963cf2d6e838528412ca15c43d87",
+    "image_file": "two_col_5785.png",
+    "options": {
+      "A": "51",
+      "B": "54",
+      "C": "62",
+      "D": "46"
+    },
+    "gold": "D",
+    "text_sha256": "7b583ce4ebe52cd6624f34e41a12c1d12453dcbfeacc0993ff635d3c26adbcbd"
+  },
+  {
+    "id": "geometry3k_train_1468",
+    "source": "geometry3k",
+    "sha": "8137aa9e51b8d3d925e35848159fe3333059fac9b717418018aa5ca320e73e0e",
+    "text_sha256": "60eacbe17b8584ce730efd4684b80b561134fddc36cceb9f3003daa900b37341"
+  },
+  {
+    "id": "geometry3k_train_1015",
+    "source": "geometry3k",
+    "sha": "ba507ccc1e269d8c595f1f17e59a9c8bfa6bb4ff8496513d7c18174a109dd34f",
+    "text_sha256": "9e1ded3f1f6e5fbe771fdfb9dc04484b29ef88592ee84f7e84f5270ef40b1ce7"
+  },
+  {
+    "id": "geometry3k_train_1666",
+    "source": "geometry3k",
+    "sha": "a2a15b9685d8f1dd286bd637a55b05659d5ebabf2f67631d396dc10db9950027",
+    "text_sha256": "8f4d49bc3b002896cbbe9cd423fe6689a05c7ee43d2434df4cd517a40ab8715e"
+  },
+  {
+    "id": "geometry3k_train_0671",
+    "source": "geometry3k",
+    "sha": "0f42e4387f96024358e421777453c76479d370d217974ef97dc62066ddb96925",
+    "text_sha256": "ffd40a30beaa01004bd2722138f7de2d1455b782fe4ade96210ce56b4788ff90"
+  },
+  {
+    "id": "geometry3k_train_2072",
+    "source": "geometry3k",
+    "sha": "9f6a111bc6810ef6a2be92a5cf73c82caf9b2b46b1bea0cf893f6c23f2471a79",
+    "text_sha256": "ac76dd9337d5fd96833c751eba59fec0980c4555d64f5345beb463991c99794f"
+  },
+  {
+    "id": "geometry3k_train_1599",
+    "source": "geometry3k",
+    "sha": "61b8332fdd61eac08e0ddae626f9f53bf9242107eb5ef4f655cecfd6b1e2c9b8",
+    "text_sha256": "0b1abdf9ff014d2e2157dd35d8337f98beb6bdb626036a1960b6bf2fc94cfd5e"
+  },
+  {
+    "id": "geometry3k_train_0245",
+    "source": "geometry3k",
+    "sha": "ac30789f1f307b57c1f6435cfa0c24528a5c5b983c5f6e02d987a98bb6e7ecdb",
+    "text_sha256": "73f641052fe8489de1b9e38f8ed5acf0318fa8ffce0d076c3aa2489fef6a6939"
+  },
+  {
+    "id": "geometry3k_train_1826",
+    "source": "geometry3k",
+    "sha": "50a89c75ed90a972887ae324866f40fccd8e3a313b0e2ac2c1977767c4b1d382",
+    "text_sha256": "b25da125277834ff393f8667413b473b3fdf80396f5845d6a9067d7bc4c0bff6"
+  },
+  {
+    "id": "geometry3k_train_1995",
+    "source": "geometry3k",
+    "sha": "e7d8b0b90940f5b0984e1fb4cbc539b01747f8140031509c9c8a85acdc39c0a0",
+    "text_sha256": "a081c870e719f501f98f2e90da0e1fe06a79df5b83141ef91f7cfc3ec7578ddf"
+  },
+  {
+    "id": "geometry3k_train_1595",
+    "source": "geometry3k",
+    "sha": "2a8007bd96500d8c36aec6feb8f8defad5ea5654cc771d108c1384ba85302f3d",
+    "text_sha256": "01f0efdf2a486f06f379e6bf21e8594117cd7e26e5fb485b9dd6904445d4607c"
+  },
+  {
+    "id": "chartqa_human_01139",
+    "source": "chartqa",
+    "sha": "f602b07562cd98cda9491a29dcd72121792e98ba650c34a18eee9ee9c15db3b3",
+    "image_file": "12244398018462.png",
+    "options": {
+      "A": "0.21",
+      "B": "0.17",
+      "C": "0.18",
+      "D": "0.20"
+    },
+    "gold": "C",
+    "text_sha256": "26da894d6659bc63fe0351b148931616f2df282d0fde88e1771962538854d4d4"
+  },
+  {
+    "id": "geometry3k_train_1305",
+    "source": "geometry3k",
+    "sha": "95b47dd5782e2d35e2f5989e7d82017f2405ec868c91fe5ce7d23caee2ae8775",
+    "text_sha256": "6e4c7e16b62af69c469643ba3a425f2465b50b95be4f9ec86153db13d56b3862"
+  },
+  {
+    "id": "geometry3k_train_0834",
+    "source": "geometry3k",
+    "sha": "8885b27bf9428b961aeb5fa323140f7875b12f9e74c5b678822249d832abf841",
+    "text_sha256": "f81513448734e80d00231f1bb7b28b0f44d10ba49386a366da646b33405b50d3"
+  },
+  {
+    "id": "geometry3k_train_1969",
+    "source": "geometry3k",
+    "sha": "d1c4b6e4d4c9d4da845576952c5f2a9b1180c54cc7ba5251c9465513cb088460",
+    "text_sha256": "3dcc484fa32c870d971e021f96ff747784b618d5f6f662ea6ee79f3b36633f07"
+  },
+  {
+    "id": "chartqa_human_04031",
+    "source": "chartqa",
+    "sha": "a58b34ead9efbfb655340f8960f0a64f0e164b941556331818787eaf210e9a08",
+    "image_file": "two_col_83230.png",
+    "options": {
+      "A": "12.2",
+      "B": "16.9",
+      "C": "14.0",
+      "D": "15.5"
+    },
+    "gold": "B",
+    "text_sha256": "8a6f1fdbb98144ece20dadb0ff861d2b94852e76b5b86617c04f35f360f2fd5b"
+  },
+  {
+    "id": "geometry3k_train_1352",
+    "source": "geometry3k",
+    "sha": "fce738de44fa79836a8ee339a8063179a11aca31bd6038d929b42fd96704db90",
+    "text_sha256": "55420cba77e1cf54e0b8c68b36cd8093e957b64d1301418bbe602422fa9968c0"
+  },
+  {
+    "id": "chartqa_human_04311",
+    "source": "chartqa",
+    "sha": "c1eed365234e18aab5911bcb7008ea87719dcc0e2d835f2a931e49d4e11620c8",
+    "image_file": "two_col_101168.png",
+    "options": {
+      "A": "14808.4",
+      "B": "25297.4",
+      "C": "12688.8",
+      "D": "27497.2"
+    },
+    "gold": "D",
+    "text_sha256": "46c5bcc3e2b2d9e41f10c0f99fdbfc9ee906c8b4e507bf7abf8cfbbc05303d12"
+  },
+  {
+    "id": "chartqa_human_03587",
+    "source": "chartqa",
+    "sha": "4499a05ffec263f43dced4fb805d7c6316aa1588b32da710241ee882991b9938",
+    "image_file": "two_col_152.png",
+    "options": {
+      "A": "12511",
+      "B": "10464",
+      "C": "11374",
+      "D": "9440"
+    },
+    "gold": "C",
+    "text_sha256": "d2c1f5b62b0a72ea29b1cf02bef637e07e800eb2ddcaed02db367fae3813a640"
+  },
+  {
+    "id": "geometry3k_train_1212",
+    "source": "geometry3k",
+    "sha": "076b5f5f0fa345c051305e15a20c68dce147e55bf7c135bf2aae7e841be0c8a5",
+    "text_sha256": "a60a189c726e99d422a610f2f6ee60812d1e81d8290d3162f05ced3556a2a8e2"
+  },
+  {
+    "id": "geometry3k_train_0122",
+    "source": "geometry3k",
+    "sha": "8d58e62d4780696f65992e8a6b116fa6eee806049edd4fa737e82f9444b1b1dd",
+    "text_sha256": "44222c53e071d314f07aea3e9b10ccbbc2f74e8557bd7eea6a408f0b83ff3bc6"
+  },
+  {
+    "id": "chartqa_human_02561",
+    "source": "chartqa",
+    "sha": "d2aec5c4c5ced327487ee5da2d5f0abb194211e22854e236be762b47c3873f1d",
+    "image_file": "4736.png",
+    "options": {
+      "A": "30",
+      "B": "22",
+      "C": "16",
+      "D": "14"
+    },
+    "gold": "C",
+    "text_sha256": "3683f88cc46061aed68f9944cc8cd433034a1a397765247115c8dc728403fbfd"
+  },
+  {
+    "id": "geometry3k_train_1982",
+    "source": "geometry3k",
+    "sha": "df73b24093483c1862c293ed5539d0e18b6ada352a0240dda88f282016fd82da",
+    "text_sha256": "ba992b52d2724825d4a2de871a2d857230e54aa1a19aca979b013f2017de7909"
+  }
+]
