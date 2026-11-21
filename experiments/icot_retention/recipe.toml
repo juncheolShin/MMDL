@@ -1,0 +1,26 @@
+[training]
+learning_rate = 1e-06
+num_train_epochs = 1.0
+per_device_train_batch_size = 2
+gradient_accumulation_steps = 1
+gradient_checkpointing = true
+min_pixels = 65536
+max_pixels = 524288
+model_max_length = 2048
+warmup_ratio = 0.03
+weight_decay = 0.01
+max_grad_norm = 1.0
+seed = 0
+logging_steps = 10
+eval_steps = 500
+save_steps = 500
+max_steps = -1
+dataloader_num_workers = 2
+dataloader_prefetch_factor = 2
+dataloader_persistent_workers = true
+
+[lora]
+learning_rate = 1e-05
+rank = 8
+alpha = 16
+dropout = 0.0

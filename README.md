@@ -4,6 +4,10 @@ Qwen3-VL-4B-Instruct를 별도 학습 데이터로 LoRA 파인튜닝하고, 같�
 
 > **데이터 분리:** MMMU와 MMMU-Pro의 모든 split은 평가 전용입니다. 학습에 사용하지 않습니다. `code/train/train_lora.py`는 평가 데이터 폴더와 MMMU 이름의 입력을 거부합니다.
 
+ICoT 실험의 발표 결과와 재현 명령은 [ICoT 보고서](icot/README.md)에 정리했습니다.
+
+팀 ICoT에서 출발해 vision encoder·merger·attention LoRA를 함께 학습한 후속 실험의 [결과 보고서](experiments/icot_retention/REPORT.md)와 [모델 복원·재학습 방법](experiments/icot_retention/README.md)을 별도로 제공합니다.
+
 ## 저장소 구성
 
 | 경로 | 내용 |

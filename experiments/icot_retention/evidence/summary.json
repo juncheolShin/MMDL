@@ -1,0 +1,70 @@
+{
+  "selection_sha256": "df5e2ecee48f13e4fb3eb0c1d26cc2b50294dab8278b2987e0f4d237e174bf61",
+  "mmmu_sha256": "b51235ba995c46ab0cfb2e630b088b597dab281342fde65c31c21deae8246c80",
+  "protocol": {
+    "revision": "98e6ac0cb9b7b2cd2c991b85a50762edc4aedc68",
+    "split": "validation",
+    "config_sha256": "4be02765ecf899f03c8d6fc0425e68f87f20301bb5dbce9e635ac0f863348969",
+    "pipeline_sha256": {
+      "code/eval/answer_extraction.py": "02409289628cb1f80f5f9fa52c500c75ecb834a7f8f849d0fb936482a5626613",
+      "code/eval/check_prompts.py": "e8a116cf2f1104c5a6f512a29abc6d93cae418bf9cec7efef9c2c65aedccaa3c",
+      "code/eval/infer_mmmu.py": "e4f9adfec23cd1ae9ee3d872cbe0061d95e16abcb1b9ffc20a9079b7bc4d6f39",
+      "code/eval/mmmu_data.py": "6a61b2d858931a18c103617acf0309ec70ad7abb32044c398b4f927b7d2a493d",
+      "code/eval/prompting.py": "866c0ae379a277c390cb5ce059dce4e4576c3e1d97cd7922274a6db902ac018e",
+      "code/eval/score_mmmu.py": "5ba1552b9d1e12a652b6949044b39e676759accca68397bc96fba29ca433d9fb"
+    },
+    "sampling": {
+      "temperature": 0.0,
+      "top_p": 0.8,
+      "top_k": 20,
+      "repetition_penalty": 1.0,
+      "presence_penalty": 1.5,
+      "max_tokens": 512
+    },
+    "engine": {
+      "tensor_parallel_size": 1,
+      "gpu_memory_utilization": 0.85,
+      "trust_remote_code": true,
+      "max_model_len": 8192,
+      "max_num_seqs": 2,
+      "limit_mm_per_prompt": {
+        "image": 10
+      },
+      "seed": 0
+    },
+    "pixels": [
+      262144,
+      2097152
+    ]
+  },
+  "mmmu": {
+    "teacher": {
+      "correct": 500,
+      "gained": 0,
+      "lost": 0
+    },
+    "0": {
+      "correct": 488,
+      "gained": 40,
+      "lost": 52
+    },
+    "0.1": {
+      "correct": 486,
+      "gained": 34,
+      "lost": 48
+    },
+    "0.25": {
+      "correct": 494,
+      "gained": 36,
+      "lost": 42
+    },
+    "0.5": {
+      "correct": 488,
+      "gained": 31,
+      "lost": 43
+    }
+  },
+  "selected_strength": "0.5",
+  "target_correct": 501,
+  "target_reached": false
+}

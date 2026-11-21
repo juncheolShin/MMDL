@@ -1,0 +1,61 @@
+{
+  "config_sha256": "4be02765ecf899f03c8d6fc0425e68f87f20301bb5dbce9e635ac0f863348969",
+  "sampling_params": {
+    "temperature": 0.0,
+    "top_p": 0.8,
+    "top_k": 20,
+    "repetition_penalty": 1.0,
+    "presence_penalty": 1.5,
+    "max_tokens": 512
+  },
+  "n_samples": 900,
+  "generation_seconds": 139.8,
+  "model_fingerprint_sha256": {
+    "model-00001-of-00002.safetensors": "39ae586ab1a1e48e2498ea8f1f1bc1139ffb6aa365e08d8b9eba3ded25b6c31b",
+    "model-00002-of-00002.safetensors": "623d67bced3d72267b78ab5249b863e603dc181731ba6792a35475e86af49fa6",
+    "chat_template.json": "6f8a6a55027e3da5160105556cda5dd69f6423f1c32645f6730d32de7773d0c4",
+    "config.json": "edac7703329133edfc53e46ac0081835144c99d7eebf28b71c732694d435224d",
+    "generation_config.json": "8469742d1fce0de951c8909b26a2c0c0d8490837ce476efb114da9e0cefc4d44",
+    "model.safetensors.index.json": "c321e968083cc64dbdc77b9cc17842396cf376399f4ff4bca6b0a001fd22afef",
+    "preprocessor_config.json": "27225450ac9c6529872ee1924fcb0962ff5634834f817040f444118116f4e516",
+    "tokenizer.json": "a5d85b6dcc535e6b93115a9ef287e6132fdbf30270da6218194ba742261173c7",
+    "tokenizer_config.json": "c2da771801886ad9ae98181793ffd3dfb7f1af30f6f7c6a4e15d7dbba52e2399",
+    "video_preprocessor_config.json": "7768af27c1fafa9cc9011c1dc20067e03f8915e03b63504550e11d5066986d13",
+    "vocab.json": "ca10d7e9fb3ed18575dd1e277a2579c16d108e32f27439684afa0e10b1440910"
+  },
+  "pipeline_sha256": {
+    "code/eval/answer_extraction.py": "02409289628cb1f80f5f9fa52c500c75ecb834a7f8f849d0fb936482a5626613",
+    "code/eval/check_prompts.py": "e8a116cf2f1104c5a6f512a29abc6d93cae418bf9cec7efef9c2c65aedccaa3c",
+    "code/eval/infer_mmmu.py": "e4f9adfec23cd1ae9ee3d872cbe0061d95e16abcb1b9ffc20a9079b7bc4d6f39",
+    "code/eval/mmmu_data.py": "6a61b2d858931a18c103617acf0309ec70ad7abb32044c398b4f927b7d2a493d",
+    "code/eval/prompting.py": "866c0ae379a277c390cb5ce059dce4e4576c3e1d97cd7922274a6db902ac018e",
+    "code/eval/score_mmmu.py": "5ba1552b9d1e12a652b6949044b39e676759accca68397bc96fba29ca433d9fb"
+  },
+  "data_and_vendored_sha256": {
+    "evaluation_data.json": "79d36a300bbff80871c130216437364e2cd05478f4fd66184fc58bf4616013c6",
+    "code/third_party/mmmu_official/data_utils.py": "b64ab451e5bdf4aff275e442d8cd195269cbe7b63678f0e95fed8eb59fa05cdd",
+    "code/third_party/mmmu_official/eval_utils.py": "cc1a89b4a27f697702d340bc6a7578b5237135754ddaa9ef105239a3d9847367",
+    "code/third_party/qwen3vl_mmmu/input_utils.py": "78720270a72a7f0b3072e32aee827ae238f99a5806310a04865aa1bc2e6e8382"
+  },
+  "llm_kwargs": {
+    "tensor_parallel_size": 1,
+    "gpu_memory_utilization": 0.85,
+    "trust_remote_code": true,
+    "max_model_len": 8192,
+    "max_num_seqs": 2,
+    "limit_mm_per_prompt": {
+      "image": 10
+    },
+    "seed": 0
+  },
+  "env": {
+    "python": "3.12.3",
+    "vllm": "0.11.2",
+    "torch": "2.9.0",
+    "transformers": "4.57.6",
+    "qwen-vl-utils": "0.0.14",
+    "datasets": "3.6.0",
+    "gpu": "NVIDIA GeForce RTX 3090",
+    "gpu_total_memory_bytes": 25296044032
+  }
+}

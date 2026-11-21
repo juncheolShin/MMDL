@@ -1,0 +1,23 @@
+{
+  "count": 18956,
+  "correct": 13821,
+  "by_source": {
+    "m3cot": {
+      "count": 6973,
+      "correct": 4076
+    },
+    "aokvqa": {
+      "count": 8983,
+      "correct": 7807
+    },
+    "pmc_vqa": {
+      "count": 1500,
+      "correct": 828
+    },
+    "scivqa": {
+      "count": 1500,
+      "correct": 1110
+    }
+  },
+  "sha256": "f0abacee297eae8a309de2b5789e40ce3a76e8d8f858d65a81e4f42085e0bfb9"
+}

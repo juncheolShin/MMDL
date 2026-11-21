@@ -1,0 +1,146 @@
+[
+  {
+    "id": "chartqa_human_05173",
+    "role": "recover",
+    "teacher": "492",
+    "source": "chartqa",
+    "probabilities": [
+      0.2678879201412201,
+      0.2851652204990387,
+      0.30355679988861084,
+      0.14339007437229156
+    ]
+  },
+  {
+    "id": "chartqa_human_04823",
+    "role": "retain",
+    "teacher": "495",
+    "source": "chartqa",
+    "probabilities": [
+      0.21563050150871277,
+      0.26010003685951233,
+      0.2295374870300293,
+      0.2947319746017456
+    ]
+  },
+  {
+    "id": "geometry3k_train_1468",
+    "role": "recover",
+    "teacher": "492",
+    "source": "geometry3k",
+    "probabilities": [
+      0.12045036256313324,
+      0.37101322412490845,
+      0.420413076877594,
+      0.0881233662366867
+    ]
+  },
+  {
+    "id": "geometry3k_train_1015",
+    "role": "retain",
+    "teacher": "495",
+    "source": "geometry3k",
+    "probabilities": [
+      0.41904550790786743,
+      0.06840729713439941,
+      0.41904550790786743,
+      0.09350169450044632
+    ]
+  },
+  {
+    "id": "geometry3k_train_1666",
+    "role": "recover",
+    "teacher": "492",
+    "source": "geometry3k",
+    "probabilities": [
+      0.08588195592164993,
+      0.3190901577472687,
+      0.23345135152339935,
+      0.36157652735710144
+    ]
+  },
+  {
+    "id": "geometry3k_train_0671",
+    "role": "retain",
+    "teacher": "495",
+    "source": "geometry3k",
+    "probabilities": [
+      0.38504454493522644,
+      0.17086248099803925,
+      0.38504454493522644,
+      0.059048496186733246
+    ]
+  },
+  {
+    "id": "geometry3k_train_2072",
+    "role": "recover",
+    "teacher": "492",
+    "source": "geometry3k",
+    "probabilities": [
+      0.0836670771241188,
+      0.37496984004974365,
+      0.45229995250701904,
+      0.0890631303191185
+    ]
+  },
+  {
+    "id": "geometry3k_train_1599",
+    "role": "retain",
+    "teacher": "495",
+    "source": "geometry3k",
+    "probabilities": [
+      0.033884044736623764,
+      0.023288141936063766,
+      0.4127921760082245,
+      0.5300356149673462
+    ]
+  },
+  {
+    "id": "geometry3k_train_0245",
+    "role": "recover",
+    "teacher": "t0",
+    "source": "geometry3k",
+    "probabilities": [
+      0.08136720955371857,
+      0.5648003816604614,
+      0.2354438155889511,
+      0.1183885857462883
+    ]
+  },
+  {
+    "id": "geometry3k_train_1826",
+    "role": "retain",
+    "teacher": "495",
+    "source": "geometry3k",
+    "probabilities": [
+      0.023438457399606705,
+      0.052819378674030304,
+      0.5334568023681641,
+      0.39028534293174744
+    ]
+  },
+  {
+    "id": "geometry3k_train_1995",
+    "role": "recover",
+    "teacher": "t0",
+    "source": "geometry3k",
+    "probabilities": [
+      0.5078471302986145,
+      0.18682654201984406,
+      0.1988757997751236,
+      0.10645054280757904
+    ]
+  },
+  {
+    "id": "geometry3k_train_1595",
+    "role": "retain",
+    "teacher": "495",
+    "source": "geometry3k",
+    "probabilities": [
+      0.08529737591743469,
+      0.522509753704071,
+      0.07527467608451843,
+      0.31691819429397583
+    ]
+  }
+]

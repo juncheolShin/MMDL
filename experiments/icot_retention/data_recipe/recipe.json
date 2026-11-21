@@ -1,0 +1,198 @@
+{
+  "format": 1,
+  "sources": {
+    "m3cot": {
+      "repo_id": "LightChen2333/M3CoT",
+      "revision": "48cf35001d595a6b0290c82c897a4b4563390821",
+      "split": "train",
+      "files": {
+        "m3cot/data/train-00000-of-00007.parquet": {
+          "path": "data/train-00000-of-00007.parquet",
+          "sha256": "e8f626be967b81becfd881267e72c7f0e2caa8f7dcf369bc73534bb2c6704ab7"
+        },
+        "m3cot/data/train-00001-of-00007.parquet": {
+          "path": "data/train-00001-of-00007.parquet",
+          "sha256": "99468fb265a5620f514e9dd81cbc3b4a10290cfc63a45aad9d8d64b64094a0e9"
+        },
+        "m3cot/data/train-00002-of-00007.parquet": {
+          "path": "data/train-00002-of-00007.parquet",
+          "sha256": "62c8c5a271c77ed704d11a641be42a2dd326f2caa0eaa2591925469aed759d3a"
+        },
+        "m3cot/data/train-00003-of-00007.parquet": {
+          "path": "data/train-00003-of-00007.parquet",
+          "sha256": "bd6a3fe756c5e9b69a1f47664acce16f6b41bb4e0adba36c255ddbfd2e09c093"
+        },
+        "m3cot/data/train-00004-of-00007.parquet": {
+          "path": "data/train-00004-of-00007.parquet",
+          "sha256": "a33b352670008a9c6839f72d091acc8d8ad2e00219b8efc6ba3449d44929403d"
+        },
+        "m3cot/data/train-00005-of-00007.parquet": {
+          "path": "data/train-00005-of-00007.parquet",
+          "sha256": "3b48a4751507aeccaa048216fb25de58fea5d79ab20377a17c9e4a52fbb76ee8"
+        },
+        "m3cot/data/train-00006-of-00007.parquet": {
+          "path": "data/train-00006-of-00007.parquet",
+          "sha256": "4f52f396bb188180b645d9ab57717b50a64e5dc16d787fd6e96b59bfd8a17a6e"
+        }
+      }
+    },
+    "aokvqa": {
+      "repo_id": "HuggingFaceM4/A-OKVQA",
+      "revision": "d1b0efa3a436e9101dfbde3752db7607da696c35",
+      "split": "train",
+      "files": {
+        "aokvqa/data/train-00000-of-00002-c1d24de3bacb5e0c.parquet": {
+          "path": "data/train-00000-of-00002-c1d24de3bacb5e0c.parquet",
+          "sha256": "180cedb78fee083f2b122ae4eb97aa4b2cae5f8d3ea26707e9871cfb9fbfdba5"
+        },
+        "aokvqa/data/train-00001-of-00002-6b4f3abe2dc385d0.parquet": {
+          "path": "data/train-00001-of-00002-6b4f3abe2dc385d0.parquet",
+          "sha256": "73c6f7065328d177d3c035096bf4c599f6b86e5cc0ebc39bb4b08e2d567537ef"
+        }
+      }
+    },
+    "scivqa": {
+      "repo_id": "katebor/SciVQA",
+      "revision": "7aa5cf20bf60e6c244b017d7e14d7b8f9100cda7",
+      "split": "train",
+      "files": {
+        "scivqa/data/images_train.zip": {
+          "path": "data/images_train.zip",
+          "sha256": "f942051c91a62ff3faedb6d360374dcb49daae6a6d9273fb798cc404c6dea9da"
+        },
+        "scivqa/data/train_2025-07-03_09-06.json": {
+          "path": "data/train_2025-07-03_09-06.json",
+          "sha256": "8a450123a8cbcd8ea1e673b48257943341a1453446c09892b5acd0f078129f51"
+        }
+      }
+    },
+    "pmc_vqa": {
+      "repo_id": "RadGenome/PMC-VQA",
+      "revision": "b56ae594f794867893143b337b4118a835794647",
+      "split": "train",
+      "files": {
+        "pmc_vqa_v2/images_2.zip": {
+          "path": "images_2.zip",
+          "sha256": "727643d0ae9182cb5572b43a74ed4100eb0920b1d83e55ed4054a393d672cb4a"
+        },
+        "pmc_vqa_v2/train_2.csv": {
+          "path": "train_2.csv",
+          "sha256": "15ead4a27b5365d1b5dc5faf1fd2246a6a5aa1ca5c2358a19532ff78c2870084"
+        }
+      }
+    },
+    "emma": {
+      "repo_id": "EMMAModal/EMMA",
+      "revision": "c7e4ac71330c54571005db7573721ad7e40dc23c",
+      "split": "test",
+      "files": {
+        "emma/c7e4ac71330c54571005db7573721ad7e40dc23c/Chemistry.parquet": {
+          "path": "Chemistry/test-00000-of-00001.parquet",
+          "sha256": "c4e65177accf53044d17e59f34864e7de83c9f7cfd2db563cb286b1fbd4397e5"
+        },
+        "emma/c7e4ac71330c54571005db7573721ad7e40dc23c/Coding.parquet": {
+          "path": "Coding/test-00000-of-00001.parquet",
+          "sha256": "0199c08ae1ea1d67d24d75bc9ea1b614ebc6edbf219d98685d7c4d8593ade191"
+        },
+        "emma/c7e4ac71330c54571005db7573721ad7e40dc23c/Math.parquet": {
+          "path": "Math/test-00000-of-00001.parquet",
+          "sha256": "95f40e267c808e1182916cb490d706f362901c09ea4f343f176f1c68261410c4"
+        },
+        "emma/c7e4ac71330c54571005db7573721ad7e40dc23c/Physics.parquet": {
+          "path": "Physics/test-00000-of-00001.parquet",
+          "sha256": "7fcdd78d6f8f335224e0c9f54dc59844cebbb82c894cba9eb8448a5be962a375"
+        }
+      }
+    }
+  },
+  "splits": {
+    "public/train": {
+      "recipe": "public_train.jsonl.gz",
+      "recipe_sha256": "dc26f75e1a7a1284b71287bf028757ba49462075199af8caa9af3be34e4cdcea",
+      "annotation": {
+        "path": "train.jsonl",
+        "sha256": "470fb398df3601d5ea66ac091dcda05948a7f1a5f317d14ffb536acf47af6259",
+        "count": 18956,
+        "images": 18811,
+        "by_source": {
+          "aokvqa": 8983,
+          "m3cot": 6973,
+          "pmc_vqa": 1500,
+          "scivqa": 1500
+        },
+        "by_source_domain": {
+          "aokvqa/commonsense": 8983,
+          "m3cot/commonsense": 1316,
+          "m3cot/mathematics": 754,
+          "m3cot/science": 4903,
+          "pmc_vqa/biomedical_imaging": 1500,
+          "scivqa/scientific_figures": 1500
+        },
+        "by_answer": {
+          "A": 4935,
+          "B": 5176,
+          "C": 4848,
+          "D": 3906,
+          "E": 91
+        },
+        "by_choice_count": {
+          "2": 393,
+          "3": 2087,
+          "4": 16028,
+          "5": 448
+        }
+      }
+    },
+    "public/dev": {
+      "recipe": "public_dev.jsonl.gz",
+      "recipe_sha256": "2d20a789a2210c9157d18e37e2d7059259868cb9a2fc3d62ae2d4d9322671fcb",
+      "annotation": {
+        "path": "dev.jsonl",
+        "sha256": "0e3ac36d7fbd9f3baca6f456b87b013389ee0f0c56c41c5a9546f810416f4e5d",
+        "count": 1044,
+        "images": 1044,
+        "by_source": {
+          "aokvqa": 660,
+          "m3cot": 384
+        },
+        "by_source_domain": {
+          "aokvqa/commonsense": 660,
+          "m3cot/commonsense": 73,
+          "m3cot/mathematics": 41,
+          "m3cot/science": 270
+        },
+        "by_answer": {
+          "A": 263,
+          "B": 284,
+          "C": 268,
+          "D": 224,
+          "E": 5
+        },
+        "by_choice_count": {
+          "2": 22,
+          "3": 115,
+          "4": 883,
+          "5": 24
+        }
+      }
+    },
+    "emma/dev": {
+      "recipe": "emma_dev.jsonl.gz",
+      "recipe_sha256": "672440af9bf5088dc1f2f3da1d460449607c57fd54522b56acedefd80cf54db3",
+      "annotation": {
+        "path": "dev.jsonl",
+        "sha256": "6148abd3c8d97521e6856d216c0f44dcf7dc7eba51fb4b5ae4f4f3d94b0e1088",
+        "count": 320,
+        "images": 320,
+        "by_source": {
+          "emma": 320
+        }
+      }
+    }
+  },
+  "benchmark_audit": {
+    "status": "passed",
+    "scope": "The recorded selection excluded matches against the pinned MMMU and MMMU-Pro index by normalized question, decoded image and perceptual hash. The released recipe fixes that selection; preparation verifies its membership, order and content.",
+    "index_sha256": "d5e01b069329fcecb47fd683b7d5aa4c29f74928650577a7d4b7bc4022170296"
+  }
+}
