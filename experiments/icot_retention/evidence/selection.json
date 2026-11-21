@@ -1,0 +1,96 @@
+{
+  "teacher": {
+    "public": {
+      "correct": 813,
+      "gained": 0,
+      "lost": 0
+    },
+    "emma": {
+      "correct": 121,
+      "gained": 0,
+      "lost": 0
+    }
+  },
+  "arms": {
+    "0": {
+      "step": 2370,
+      "public": {
+        "correct": 837,
+        "gained": 50,
+        "lost": 26
+      },
+      "emma": {
+        "correct": 119,
+        "gained": 18,
+        "lost": 20
+      }
+    },
+    "0.1": {
+      "step": 2000,
+      "public": {
+        "correct": 831,
+        "gained": 44,
+        "lost": 26
+      },
+      "emma": {
+        "correct": 116,
+        "gained": 14,
+        "lost": 19
+      }
+    },
+    "0.25": {
+      "step": 1500,
+      "public": {
+        "correct": 834,
+        "gained": 44,
+        "lost": 23
+      },
+      "emma": {
+        "correct": 121,
+        "gained": 16,
+        "lost": 16
+      }
+    },
+    "0.5": {
+      "step": 2370,
+      "public": {
+        "correct": 838,
+        "gained": 40,
+        "lost": 15
+      },
+      "emma": {
+        "correct": 126,
+        "gained": 18,
+        "lost": 13
+      }
+    }
+  },
+  "selected_strength": "0.5",
+  "best_including_control": "0.5",
+  "models_sha256": {
+    "teacher": {
+      "model-00001-of-00002.safetensors": "39ae586ab1a1e48e2498ea8f1f1bc1139ffb6aa365e08d8b9eba3ded25b6c31b",
+      "model-00002-of-00002.safetensors": "623d67bced3d72267b78ab5249b863e603dc181731ba6792a35475e86af49fa6"
+    },
+    "0": {
+      "model-00001-of-00002.safetensors": "ed9a47e0d87de64d19d9aa8690d77586d9ef3cc12833c0b45ed6d8418b80c06a",
+      "model-00002-of-00002.safetensors": "6ba4d6e5aa23f2e9a47167fb4efa8a8e537b147054433c1fe7289befa1df7f52"
+    },
+    "0.1": {
+      "model-00001-of-00002.safetensors": "460a81df70b1d95e299f1dd65a7b1c87a0a709d4d3fb78f6b721bae841c13488",
+      "model-00002-of-00002.safetensors": "493a7d12936b81a107362261257ba24a8921f7835cd1b2cf12bba13bd712a3d1"
+    },
+    "0.25": {
+      "model-00001-of-00002.safetensors": "249886f2a2e619074e53cdfc5007cb3a1b0a1855667958ca589cd9c9f6cf2d93",
+      "model-00002-of-00002.safetensors": "933ce8d12cf72929cd2590d0edf65d764258f7ead3020a79e3259fda28c3ec70"
+    },
+    "0.5": {
+      "model-00001-of-00002.safetensors": "9a3977325f27124b936965abfe89f2b480a14e46f046f1a5028d8cc976e05a94",
+      "model-00002-of-00002.safetensors": "9a26b2a3c222028a74854648ce2854e24c1bfb052c5647d2ffdd54e7a59b4901"
+    }
+  },
+  "inputs_sha256": {
+    "public.jsonl.gz": "0b75fd6472e71bea05892b0c66667ceb23c14311d4cb4ba1e9e3afdb9e099aee",
+    "emma.jsonl.gz": "574051c6959f4db97c861ddc786ac4b9f431398a1c68df47cbca785ff45b3601"
+  }
+}
