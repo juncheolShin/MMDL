@@ -106,11 +106,14 @@ def main():
     args = ap.parse_args()
     run_dir = Path(args.run_dir)
 
-    preds = [json.loads(l) for l in open(run_dir / 'predictions.jsonl')]
+    # encoding is explicit on every read and write below: the saved responses and
+    # the scored CSVs hold non-ASCII, and a locale default (cp949 on a Korean
+    # Windows, for one) either raises UnicodeDecodeError or writes mojibake.
+    preds = [json.loads(l) for l in open(run_dir / 'predictions.jsonl', encoding='utf-8')]
     metadata_path = run_dir / 'evaluation_data.json'
     if not metadata_path.is_file():
         raise SystemExit(f'missing {metadata_path}; scoring requires metadata saved during MMMU inference')
-    evaluation_data = json.loads(metadata_path.read_text())
+    evaluation_data = json.loads(metadata_path.read_text(encoding='utf-8'))
     answers = evaluation_data['samples']
     if len(preds) != 900 or len({p['id'] for p in preds}) != 900 or set(answers) != {p['id'] for p in preds}:
         raise SystemExit('evaluation requires 900 unique predictions matching the loaded dataset')
@@ -143,10 +146,11 @@ def main():
             'output_tokens_max': max(n_tokens),
         },
     }
-    (run_dir / 'scores.json').write_text(json.dumps(scores, indent=2, ensure_ascii=False))
+    (run_dir / 'scores.json').write_text(json.dumps(scores, indent=2, ensure_ascii=False),
+                                         encoding='utf-8')
 
     by_id = {p['id']: p for p in preds}
-    with open(run_dir / 'per_sample.csv', 'w', newline='') as f:
+    with open(run_dir / 'per_sample.csv', 'w', newline='', encoding='utf-8') as f:
         w = csv.writer(f)
         w.writerow(['id', 'subject', 'question_type', 'answer_type', 'gt', 'pred', 'method', 'conflict', 'correct',
                     'official_parsed', 'official_correct', 'official_random_fallback', 'finish_reason',
@@ -156,7 +160,7 @@ def main():
             w.writerow([i, subject_of(i), answers[i]['question_type'], s['answer_type'], answers[i]['ground_truth'],
                         s['pred'], s['method'], int(s['conflict']), int(s['correct']), o['parsed'], int(o['correct']),
                         int(o['random_fallback']), p['finish_reason'], p['n_output_tokens'], s['span'][:200]])
-    with open(run_dir / 'mc_disagreements.csv', 'w', newline='') as f:
+    with open(run_dir / 'mc_disagreements.csv', 'w', newline='', encoding='utf-8') as f:
         w = csv.writer(f)
         w.writerow(['id', 'gt', 'structured', 'method', 'official', 'official_random_fallback', 'response'])
         for i in disagree:
