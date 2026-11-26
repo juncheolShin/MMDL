@@ -1,0 +1,6 @@
+# Keep new run outputs local. Tracked submission results stay versioned.
+*
+!.gitignore
+!README.md
+!tab640/
+!tab640/final.json
