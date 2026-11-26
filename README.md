@@ -10,6 +10,10 @@ ICoT 실험의 발표 결과와 재현 명령은 [ICoT 보고서](icot/README.md
 
 정답만 가르친 지도와 증거·풀이·정답을 가르친 지도를 같은 데이터·같은 step·같은 홀드아웃에서 비교한 증거 지도 실험은 [결과 보고서](experiments/evidence_supervision/REPORT.md) · [데이터 구축](experiments/evidence_supervision/DATA.md) · [재현 안내](experiments/evidence_supervision/README.md)에 정리했습니다. 각 arm이 학습하는 모듈과 base 모델 구조는 [모델 구조](experiments/evidence_supervision/MODEL.md)에 있습니다(실측 파라미터 수로 검산). GPU 없이 핵심 주장을 확인하려면 `python experiments/evidence_supervision/make_evidence.py`를 실행합니다.
 
+## ICoT 표 640문항 최종 제출
+
+T0 → 498 → 표 640문항 모델의 MMMU test 정답은 **5,090 → 5,230 → 5,305 / 10,500**, MMMU-Pro Overall은 **35.87% → 33.82% → 35.00%**였다. 저장한 최종 가중치로 평가하거나, 기존 498에서 마지막 학습을 다시 실행할 수 있다. [과제 보고서 및 순서대로 실행하는 방법](assignment/icot640.md) · [학습·평가 코드](code/tab640) · [최종 결과 JSON](results/tab640/final.json)
+
 ## 저장소 구성
 
 | 경로 | 내용 |
@@ -28,7 +32,7 @@ ICoT 실험의 발표 결과와 재현 명령은 [ICoT 보고서](icot/README.md
 | `configs/arms/` | arm별 LoRA 학습 설정. `ARM=` 이름으로 고르고 글로벌 배치 32는 고정 |
 | `code/third_party/` | 공식 이미지 입력 처리 함수·참조 파서와 출처 |
 | `experiments/` | 실험별 자기완결 패키지 (보고서·데이터 근거·GPU 없이 확인하는 증거) |
-| `results/` | 실험 설정·원문 응답·채점 결과 (Git 제외) |
+| `results/` | 제출한 최종 점수와 결과 안내. 대용량 추론 출력은 로컬에 저장 |
 
 ## 재현 환경
 
