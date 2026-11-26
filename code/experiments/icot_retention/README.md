@@ -2,9 +2,9 @@
 
 기존 ICoT의 MMMU 정답 수를 늘리기 위해 외부 객관식 18,956문항으로 vision encoder·merger·언어 attention LoRA를 함께 학습했다. 증류 강도 네 가지를 비교한 결과, 외부 검증에서 미리 선정한 λ=0.5 모델은 MMMU에서 **488/900**을 기록했다. 이 환경에서 재평가한 기존 ICoT는 **500/900**이었고, 학생 모델 중 MMMU 최고 점수는 λ=0.25의 **494/900**이었다. 훈련 데이터, 학습 손실, 후보 선택 기준과 문항별 변화는 [실험 보고서](REPORT.md)에 정리했다.
 
-실행할 브랜치는 `experiment/icot-specialist-retention`이다. 처음 내려받을 때 `GIT_LFS_SKIP_SMUDGE=1 git clone -b experiment/icot-specialist-retention https://github.com/juncheolShin/MMDL.git`을 사용하면 필요한 모델만 2절에서 받을 수 있다.
+처음 내려받을 때 `GIT_LFS_SKIP_SMUDGE=1 git clone https://github.com/juncheolShin/MMDL.git`을 사용하면 필요한 모델만 2절에서 받을 수 있다.
 
-아래 명령은 저장소 루트에서 실행한다. 결과만 확인하려면 1절, 배포한 모델을 직접 평가하려면 2절, 같은 데이터로 처음부터 학습하려면 3절을 사용한다.
+아래 명령은 저장소 최상위에서 `cd code` 후 실행한다. 결과만 확인하려면 1절, 배포한 모델을 직접 평가하려면 2절, 같은 데이터로 처음부터 학습하려면 3절을 사용한다.
 
 ## 1. 저장된 예측으로 결과 확인
 
@@ -50,7 +50,7 @@ python code/train/export_mixed_checkpoint.py \
 
 ```bash
 STRENGTH=0.5
-git lfs pull --include="$EX/weights/lambda-$STRENGTH.zip" --exclude=""
+git -C .. lfs pull --include="code/$EX/weights/lambda-$STRENGTH.zip" --exclude=""
 python "$EX/model.py" --base "$WORK/teacher" --strength "$STRENGTH" \
   --output "$WORK/student-$STRENGTH"
 CUDA_VISIBLE_DEVICES=0 DATA_PATH="$PWD/data" HF_HOME="$PWD/data" \

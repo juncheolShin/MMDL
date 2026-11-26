@@ -3,7 +3,7 @@
 - **팀명**: 도비
 - **팀원**: 신준철, 이민규, 김연서, 이진우
 - **작성일**: 2026-09-28
-- **재현 커맨드**: `docker build -t ssu:MMDL . && bash code/scripts/run_mmmu_eval.sh` (인자 없이 실행하면 3절의 기준 설정으로 추론과 채점을 수행한다. 경로 지정은 1절 참조)
+- **재현 커맨드**: `cd code && docker build -t ssu:MMDL . && bash code/scripts/run_mmmu_eval.sh` (인자 없이 실행하면 3절의 기준 설정으로 추론과 채점을 수행한다. 경로 지정은 1절 참조)
 
 ---
 
@@ -17,12 +17,13 @@
 | 사용 GPU | RTX 3090, 24GB |
 | 실측 peak VRAM | 약 21GB |
 | 총 소요 시간 | 440.2초(약 7분 20초) / 900문항 로드·입력 준비·모델 로드·생성. 이 중 생성 343.7초. 채점은 CPU에서 별도로 수행 |
-| 의존성 | [평가 의존성](../code/requirements-eval.txt), [학습·다운로드 의존성](../code/requirements-train.txt), [Dockerfile](../Dockerfile) |
+| 의존성 | [평가 의존성](../code/code/requirements-eval.txt), [학습·다운로드 의존성](../code/code/requirements-train.txt), [Dockerfile](../code/Dockerfile) |
 | 실행 커맨드 | 아래 bash 명령. 모델·데이터·설정·결과 경로를 CLI 인자로 지정한다. |
 
-호스트의 프로젝트 루트에서 처음 한 번 이미지를 빌드한다. 모델과 평가 데이터는 이미지에 포함된다.
+호스트에서 저장소 최상위의 `code/`로 이동해 처음 한 번 이미지를 빌드한다. 이후 호스트 명령도 그 디렉터리에서 실행한다. 모델과 평가 데이터는 이미지에 포함된다.
 
 ```bash
+cd code
 docker build -t "<Docker 이미지 이름>" .
 ```
 
@@ -123,7 +124,7 @@ Answer with the option letter only.<|im_end|>
 
 ## 4. 채점(파싱) 방식
 
-- **사용한 파서/로직**: [answer_extraction.py](../code/eval/answer_extraction.py)에서 모델 응답의 답을 추출하고, [score_mmmu.py](../code/eval/score_mmmu.py)에서 정답과 비교한다.
+- **사용한 파서/로직**: [answer_extraction.py](../code/code/eval/answer_extraction.py)에서 모델 응답의 답을 추출하고, [score_mmmu.py](../code/code/eval/score_mmmu.py)에서 정답과 비교한다.
 
   채점 규칙의 참고 기준은 [MMMU 공식 평가 코드의 `parse_multi_choice_response`, `parse_open_response`, `eval_open`](https://github.com/MMMU-Benchmark/MMMU/blob/268471d0d488258990025331c7528359c324aa25/mmmu/utils/eval_utils.py)이다. 객관식의 선택지 글자 비교와 숫자 답의 소수 둘째 자리 반올림 비교는 공식 구현과 같다. 다만 답을 찾는 과정은 별도로 구현했다. `Answer: C`처럼 답을 명시한 표현을 우선하며, 굵은 글씨나 수식 표기로 감싼 답도 읽도록 했다. 또한 공식 객관식 파서는 답을 찾지 못하면 선택지를 무작위로 고르지만, 이 평가에서는 오답으로 처리한다. 공식 파서로도 별도 채점해 비교하며, **5절의 제출 점수에는 자체 파서의 결과를 사용했다.**
 
