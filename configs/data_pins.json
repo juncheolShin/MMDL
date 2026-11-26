@@ -1,0 +1,27 @@
+{
+  "ai2d": {
+    "pinned_utc": "2026-11-18T09:31:03+00:00",
+    "repo_id": "lmms-lab-encoder/ai2d",
+    "revision": "c83a9b9692933aff8349157c88a413df9d02c4e5"
+  },
+  "chartqa": {
+    "pinned_utc": "2026-11-18T09:31:03+00:00",
+    "repo_id": "HuggingFaceM4/ChartQA",
+    "revision": "b605b6e08b57faf4359aeb2fe6a3ca595f99b6c5"
+  },
+  "chartqapro": {
+    "pinned_utc": "2026-11-18T09:31:04+00:00",
+    "repo_id": "ahmed-masry/ChartQAPro",
+    "revision": "e27c2874825874d6767d2bbc538ed4f0dc2c64c2"
+  },
+  "scienceqa": {
+    "pinned_utc": "2026-11-18T09:31:03+00:00",
+    "repo_id": "derek-thomas/ScienceQA",
+    "revision": "f18b0a70359ebfb41f658fd564208d0355b013f4"
+  },
+  "textvqa": {
+    "pinned_utc": "2026-11-18T10:05:02+00:00",
+    "repo_id": "lmms-lab-encoder/textvqa",
+    "revision": "9c0699cd19768ac5ab97568f6b3cbac4c0062884"
+  }
+}

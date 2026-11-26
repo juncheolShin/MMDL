@@ -1,0 +1,8 @@
+run,structured,official,diff,random_fallback,fallback_hit,misparse_loss,misparse_gain,wording_artifact
+baseline,468,480,12,29,9,1,8,0
+a_cqa,465,473,8,27,6,1,4,0
+b_cqa,472,475,3,6,1,4,6,0
+b_cqa_shape,468,463,-5,9,4,11,4,8
+b_cqa_shape_s1,475,465,-10,19,4,8,1,5
+b_cqa_shape_s2,468,462,-6,7,0,9,5,7
+t_stop,383,447,64,147,29,16,67,0

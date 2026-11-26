@@ -1,0 +1,27 @@
+# arm D - language LoRA plus the winning vision configuration
+# H200 profile. Copy this file for a new experiment; paths and run names stay on
+# the command line. Values verified against measured module names (probe job,
+# 2026-11-19) and the parameter counts in DECISIONS.md section 2.
+[training]
+epochs = 1.0
+learning_rate = 0.0001
+gradient_accumulation_steps = 2        # 2 GPU x per_device 8 x 2 = global 32 (D44)
+per_device_train_batch_size = 8        # H200 141GB; the 4090 profile used 1
+lora_r = 64                            # D43: arm A/B 132.12M vs arm C1 109.11M
+lora_alpha = 128
+lora_dropout = 0.0                     # upstream turned this into 0.05; patched
+max_steps = -1
+min_pixels = 65536
+max_pixels = 524288
+model_max_length = 2048
+seed = 0
+gradient_checkpointing = false         # 141GB: no need to recompute (~30% faster)
+dataloader_num_workers = 4             # pod limit is 8 CPU, not the 128 nproc reports
+
+[trainable]
+arm = "d"
+llm_lora = true
+llm_lora_targets = ["q_proj", "k_proj", "v_proj", "o_proj", "gate_proj", "up_proj", "down_proj"]
+vision_lora_blocks = [20, 21, 22, 23]
+vision_lora_targets = ["qkv", "proj"]
+train_adapters = true

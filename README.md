@@ -8,6 +8,8 @@ ICoT 실험의 발표 결과와 재현 명령은 [ICoT 보고서](icot/README.md
 
 팀 ICoT에서 출발해 vision encoder·merger·attention LoRA를 함께 학습한 후속 실험의 [결과 보고서](experiments/icot_retention/REPORT.md)와 [모델 복원·재학습 방법](experiments/icot_retention/README.md)을 별도로 제공합니다.
 
+정답만 가르친 지도와 증거·풀이·정답을 가르친 지도를 같은 데이터·같은 step·같은 홀드아웃에서 비교한 증거 지도 실험은 [결과 보고서](experiments/evidence_supervision/REPORT.md) · [데이터 구축](experiments/evidence_supervision/DATA.md) · [재현 안내](experiments/evidence_supervision/README.md)에 정리했습니다. GPU 없이 핵심 주장을 확인하려면 `python experiments/evidence_supervision/make_evidence.py`를 실행합니다.
+
 ## 저장소 구성
 
 | 경로 | 내용 |
@@ -17,10 +19,15 @@ ICoT 실험의 발표 결과와 재현 명령은 [ICoT 보고서](icot/README.md
 | `code/eval/` | 보고서의 고정 프롬프트 기반 vLLM 추론, MMMU 채점, 검증 코드 |
 | `code/eval/mmmu_data.py` | 지정 revision의 30개 과목 로딩·문항 수 확인·이미지 저장 |
 | `code/train/` | Qwen 공식 멀티모달 trainer를 호출하는 LoRA 학습·병합 코드 |
+| `code/data/` | 학습 데이터 정규화, 증거 생성, 분할·층화, 품질 자동 측정 |
+| `code/audit/` | 증거 품질을 사람이 판정하는 로컬 웹 UI (이미지·입력·타깃을 한 화면에) |
+| `code/cluster/` | 공유 GPU 클러스터 잡 제출과 시크릿 주입 (`--node`·`--gpus` 필수) |
 | `code/scripts/` | 에셋 다운로드 및 한 명령 평가 실행 |
 | `configs/evaluation.toml` | 제출 기준 512토큰 설정 |
 | `configs/rtx4090.toml` | LoRA 학습 설정 |
+| `configs/arms/` | arm별 LoRA 학습 설정. `ARM=` 이름으로 고르고 글로벌 배치 32는 고정 |
 | `code/third_party/` | 공식 이미지 입력 처리 함수·참조 파서와 출처 |
+| `experiments/` | 실험별 자기완결 패키지 (보고서·데이터 근거·GPU 없이 확인하는 증거) |
 | `results/` | 실험 설정·원문 응답·채점 결과 (Git 제외) |
 
 ## 재현 환경

@@ -1,0 +1,138 @@
+# Evaluation Job: MMMU reproduction, in-domain scoring, or cost measurement.
+#
+# code/scripts/run_mmmu_eval.sh cannot be used here. It decides whether it is
+# already inside a container by testing for /.dockerenv, which Kubernetes pods do
+# not have, so it would try to start Docker. This template calls the Python
+# directly instead.
+#
+# Which task runs is chosen by TASK:
+#   mmmu      infer_mmmu.py + score_mmmu.py on MMMU validation (900 questions)
+#   indomain  infer_indomain.py on the candidate pool (the Phase 0 correct/wrong split)
+#   cost      measure_cost.py, batch size 1, for the latency and memory constraint
+#   profile   profile_step.py, one fwd+bwd under torch.profiler (needs SFT_SET)
+#
+# Submit through code/cluster/submit_job.sh so the node and GPU count stay explicit:
+#   TASK=indomain bash code/cluster/submit_job.sh --template eval \
+#       --node h200-03-w-7271 --gpus 1 --name yeunsuh-phase0
+#
+# Required: JOB_NAME NODE_NAME GPU_COUNT TASK  (+ SFT_SET when TASK=profile)
+# Optional: MODEL_DIR RUN_NAME COST_LIMIT(100) COST_REPEATS(3) EXTRA_ARGS
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: ${JOB_NAME}
+  namespace: ${NAMESPACE}
+  labels:
+    app: mmdl
+    role: eval
+spec:
+  backoffLimit: 0
+  ttlSecondsAfterFinished: 604800
+  template:
+    metadata:
+      labels:
+        app: mmdl
+        role: eval
+        mlx.navercorp.com/zone: ${ZONE}
+        management.mlx.navercorp.com/project: test2
+        management.mlx.navercorp.com/workspace: realitylab
+      annotations:
+        mlx.navercorp.com/zone: ${ZONE}
+    spec:
+      restartPolicy: Never
+      nodeSelector:
+        kubernetes.io/hostname: ${NODE_NAME}
+      containers:
+        - name: pytorch
+          image: ${IMAGE}
+          workingDir: /workspace/MMDL
+          command:
+            - bash
+            - -c
+            - |
+              set -euo pipefail
+              nvidia-smi
+              source ${ENV_FILE}
+              export DATA_PATH=/workspace/data
+              RUN=${RUN_NAME}
+              OUT=/workspace/results
+
+              case "${TASK}" in
+                mmmu)
+                  python -u code/eval/infer_mmmu.py \
+                    --model "${MODEL_DIR}" --run-name "$RUN" \
+                    --config configs/evaluation.toml \
+                    --data-path /workspace/data --out-root "$OUT" ${EXTRA_ARGS}
+                  python -u code/eval/score_mmmu.py "$OUT/$RUN"
+                  ;;
+                indomain)
+                  python -u code/eval/infer_indomain.py \
+                    --model "${MODEL_DIR}" --run-name "$RUN" \
+                    --candidates /workspace/MMDL/training_data/cluster_upload/candidates \
+                    --image-root /workspace/MMDL/training_data/cluster_upload \
+                    --config configs/evaluation.toml --out-root "$OUT" ${EXTRA_ARGS}
+                  ;;
+                cost)
+                  python -u code/eval/measure_cost.py \
+                    --model "${MODEL_DIR}" --run-name "$RUN" \
+                    --config configs/evaluation.toml \
+                    --data-path /workspace/data --out-root "$OUT" \
+                    --limit ${COST_LIMIT} --repeats ${COST_REPEATS} ${EXTRA_ARGS}
+                  ;;
+                patchembed)
+                  # Times nn.Conv3d against the equivalent matmul for the vision
+                  # patch embedding, and checks they agree (DECISIONS.md 16.5).
+                  python -u code/train/patch_embed_fix.py --model "${MODEL_DIR}" ${EXTRA_ARGS}
+                  ;;
+                profile)
+                  # Names the operator eating the 174.5 s training step. Needs a
+                  # GPU but no checkpoint, and runs in about two minutes
+                  # (DECISIONS.md section 16).
+                  python -u code/train/profile_step.py                     --model "${MODEL_DIR}"                     --annotation "/workspace/MMDL/training_data/sft/${SFT_SET}/train.jsonl"                     --image-root "/workspace/MMDL/training_data/cluster_upload"                     ${EXTRA_ARGS}
+                  ;;
+                *)
+                  echo "unknown TASK: ${TASK} (want mmmu | indomain | cost | profile)" >&2
+                  exit 2
+                  ;;
+              esac
+          env:
+            - name: PYTHONUNBUFFERED
+              value: "1"
+            - name: TOKENIZERS_PARALLELISM
+              value: "false"
+            - name: OMP_NUM_THREADS
+              value: "${OMP_THREADS}"
+            - name: HF_HOME
+              value: /workspace/.cache/hf
+            # vLLM's own defaults for this project, mirrored from the Dockerfile
+            - name: VLLM_WORKER_MULTIPROC_METHOD
+              value: spawn
+            - name: VLLM_ENABLE_V1_MULTIPROCESSING
+              value: "0"
+          resources:
+            limits:
+              cpu: "${CPU_LIMIT}"
+              memory: ${MEM}
+              nvidia.com/gpu: "${GPU_COUNT}"
+            requests:
+              cpu: "500m"
+              memory: ${MEM}
+              nvidia.com/gpu: "${GPU_COUNT}"
+          volumeMounts:
+            - name: workspace
+              mountPath: /workspace
+            - name: data
+              mountPath: /data
+            - name: dshm
+              mountPath: /dev/shm
+      volumes:
+        - name: workspace
+          persistentVolumeClaim:
+            claimName: ${PVC_NAME}
+        - name: data
+          persistentVolumeClaim:
+            claimName: data
+        - name: dshm
+          emptyDir:
+            medium: Memory
+            sizeLimit: 16Gi

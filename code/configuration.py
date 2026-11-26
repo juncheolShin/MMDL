@@ -20,6 +20,23 @@ TRAINING_TYPES = {
     'lora_r': int, 'lora_alpha': int, 'lora_dropout': float,
     'max_steps': int, 'min_pixels': int, 'max_pixels': int,
     'model_max_length': int,
+    # Added 2026-11-19. seed was previously not passed at all, so every run used
+    # HuggingFace's default of 42 and the planned 3-seed comparison was impossible.
+    'seed': int,
+    # H200 has 141GB, so recomputation is not needed; on a 24GB card it was.
+    'gradient_checkpointing': bool,
+    'dataloader_num_workers': int,
+}
+
+# Which parameters an arm trains. Consumed by code/train/mmdl_trainable_spec.py,
+# which replaces upstream's hardcoded LoRA branch. See DECISIONS.md section 2.
+TRAINABLE_TYPES = {
+    'arm': str,
+    'llm_lora': bool,
+    'llm_lora_targets': list,
+    'vision_lora_blocks': list,
+    'vision_lora_targets': list,
+    'train_adapters': bool,
 }
 
 

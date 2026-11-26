@@ -47,6 +47,28 @@ MC_CASES = [
     ('lower-case letter in parentheses', 'The answer is (d).', ART8, 'D'),
     ('lower-case letter alone', 'c', ART8, 'C'),
     ('lower-case article is not a letter', 'The answer is a coastal town: Aldeburgh, Suffolk.', ART8, 'C'),
+
+    # The ekra target format: evidence, reasoning, then the letter alone on the
+    # last line. Before `final_line_letter` these fell through to `option_text`,
+    # which read the quoted evidence instead of the model's own answer (D66).
+    ('ekra format, letter on the final line',
+     'Evidence: Stigma\nReasoning: The marked position in the diagram reads "Stigma".\nD',
+     {'A': 'Style', 'B': 'Ovary', 'C': 'Stigma', 'D': 'Anther'}, 'D'),
+    ('ekra format where no option text appears at all',
+     'Evidence: night\nReasoning: The diagram labels that position "night".\nA',
+     ART8, 'A'),
+    ('ekra format citing several options',
+     'Evidence: Common seal -> Crab; Common seal -> Lobster\nReasoning: Arrows reach '
+     '"Common seal" from "Crab" and "Lobster", so they feed on it.\nA',
+     {'A': 'common seal', 'B': 'limpet', 'C': 'crab', 'D': 'lobster'}, 'A'),
+    ('final line with a trailing full stop',
+     'Evidence: Adult\nReasoning: The diagram labels that position "Adult".\nB.',
+     ART8, 'B'),
+    # The rule must not hijack a response that already states its answer, and a
+    # final line beginning with a capital A is a sentence, not a letter.
+    ('final line is a sentence, not an answer',
+     'The answer is C.\nA scallop-shaped steel work stands on that beach.',
+     ART8, 'C'),
 ]
 
 # (name, response, ground truth, expected correct)

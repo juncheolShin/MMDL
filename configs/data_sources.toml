@@ -1,0 +1,35 @@
+# Training data sources. Evaluation data (MMMU, MMMU-Pro) is NOT listed here and
+# never will be: code/scripts/fetch_hf_datasets.py owns that, and this file is
+# refused if a repo id contains "mmmu".
+#
+# role: "core"     downloaded by default
+#       "optional" downloaded only with --include-optional
+#
+# Revisions are not written here. They live in configs/data_pins.json, which is
+# created by `--pin` and committed. Separating them keeps the intent (which
+# repositories) apart from the lock (which commit of each).
+
+[chartqa]
+repo_id = "HuggingFaceM4/ChartQA"
+role = "core"
+note = "chart question answering, short free-form answers"
+
+[ai2d]
+repo_id = "lmms-lab-encoder/ai2d"
+role = "core"
+note = "science diagrams, multiple choice"
+
+[scienceqa]
+repo_id = "derek-thomas/ScienceQA"
+role = "core"
+note = "school science QA; only the image-bearing rows are usable here"
+
+[chartqapro]
+repo_id = "ahmed-masry/ChartQAPro"
+role = "optional"
+note = "harder chart benchmark; planned as a secondary evaluation set, not training data"
+
+[textvqa]
+repo_id = "lmms-lab-encoder/textvqa"
+role = "core"
+note = "scene text VQA; added to match the teammate's baseline training mix"

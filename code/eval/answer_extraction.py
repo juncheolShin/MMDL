@@ -161,6 +161,20 @@ class Extraction:
     span: str = ''        # text the answer was read from (for auditing)
 
 
+def _final_line_letter(text, valid):
+    """The last non-empty line, when it is nothing but one valid option letter.
+
+    Only a line that holds the letter ALONE counts. A line like "A tadpole
+    hatches" starts with a capital A and must not be read as an answer.
+    """
+    for line in reversed((text or '').split('\n')):
+        line = line.strip().strip('.').strip()
+        if not line:
+            continue
+        return line.upper() if len(line) == 1 and line.upper() in valid else None
+    return None
+
+
 def extract_choice(response, options, truncated=False):
     """Multiple choice: option letter or None. `options` maps letter -> option text.
     `truncated`: the response hit the output token limit (see the module docstring)."""
@@ -187,6 +201,24 @@ def extract_choice(response, options, truncated=False):
         return Extraction(letter, 'leading_letter', span=text[:120])
     if '\n' not in text.strip() and _lone_letter(text) in valid:
         return Extraction(_lone_letter(text), 'bare_letter', span=text[:120])
+
+    # A response that reasons first and then puts the option letter on its own
+    # final line. This is exactly the shape the ekra targets teach, and without
+    # this rule the chain falls through to `option_text`, which reads the
+    # EVIDENCE - where the model quotes a diagram label that is often itself one
+    # of the options - and answers with that instead of what the model said.
+    #
+    # Measured on arm B's AI2D holdout (600 rows): the final line was a bare
+    # valid letter in 600 of 600, yet 77 came back unparsed and 15 more were
+    # given a different letter than the model wrote. Trusting the final line
+    # moves that arm from 62.00% to 71.67% without re-running inference. The
+    # rule costs arm A nothing - its responses are a single letter and are
+    # caught above - so leaving it out penalised exactly the arm whose output
+    # is long, which is the arm under test (D66).
+    final = _final_line_letter(text, valid)
+    if final:
+        return Extraction(final, 'final_line_letter', span=text[-120:])
+
     if truncated:
         return Extraction(None, 'truncated_no_answer')
 

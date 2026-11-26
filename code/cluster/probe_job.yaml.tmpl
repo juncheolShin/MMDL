@@ -1,0 +1,205 @@
+# One short GPU Job that answers the single question blocking DECISIONS.md section 5:
+#
+#   What are the Qwen3-VL *module names*? Specifically, do the vision blocks use a
+#   fused `qkv` or split `q_proj`/`k_proj`/`v_proj`, and what are the merger and
+#   DeepStack modules called?
+#
+#   This decides whether arms A and B are valid as written. Upstream hardcodes
+#   target_modules=["q_proj","k_proj","v_proj","o_proj"]. If the vision blocks use
+#   those same names, LoRA silently wraps the vision tower too and the
+#   "language only" premise of A and B is false.
+#
+# It also settles DECISIONS.md G3 (is the encoder really SigLIP-2, or Qwen3-ViT?)
+# from vision_config, and confirms torch/CUDA work in a Job.
+#
+# GPU inventory is NOT the point - the lab's ops dashboard already shows pod names
+# and free GPUs. `nvidia-smi` here is only a one-line sanity check that this Job
+# actually got a device.
+#
+# Render and submit:
+#   export JOB_NAME=probe-$(date +%m%d-%H%M)
+#   envsubst < code/cluster/probe_job.yaml.tmpl > code/cluster/rendered/$JOB_NAME.yaml
+#   kubectl --kubeconfig reality-lab.yaml apply -f code/cluster/rendered/$JOB_NAME.yaml
+#   kubectl --kubeconfig reality-lab.yaml logs -n p-test2 -l job-name=$JOB_NAME --prefix=true -f
+#
+# Required: JOB_NAME
+# Optional: NAMESPACE(p-test2) PVC_NAME(yeunsuh-workspace-1) GPU_COUNT(1)
+#           CPU_LIMIT(8) MEM(32Gi) ZONE(private-h200-realitylab-0)
+#           IMAGE(kubeflow-jupyter:2.7.0) MODEL_DIR(/workspace/models/Qwen3-VL-4B-Instruct)
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: ${JOB_NAME}
+  namespace: ${NAMESPACE}
+  labels:
+    app: mmdl
+    role: probe
+spec:
+  backoffLimit: 0
+  ttlSecondsAfterFinished: 86400
+  template:
+    metadata:
+      labels:
+        app: mmdl
+        role: probe
+        # Required by this cluster; without them the pod is not scheduled.
+        mlx.navercorp.com/zone: ${ZONE}
+        management.mlx.navercorp.com/project: test2
+        management.mlx.navercorp.com/workspace: realitylab
+      annotations:
+        mlx.navercorp.com/zone: ${ZONE}
+    spec:
+      restartPolicy: Never
+      # Pinned to one node on purpose. Never render this template by hand -
+      # use code/cluster/submit_job.sh, which refuses to run without --node.
+      nodeSelector:
+        kubernetes.io/hostname: ${NODE_NAME}
+      containers:
+        - name: probe
+          image: ${IMAGE}
+          command:
+            - bash
+            - -c
+            - |
+              set -uo pipefail
+              line() { printf '\n===== %s =====\n' "$1"; }
+
+              line "gpu"
+              nvidia-smi --query-gpu=index,name,memory.total,driver_version,compute_cap \
+                         --format=csv || nvidia-smi || echo "NO GPU VISIBLE"
+
+              line "limits"
+              echo "nproc reports : $(nproc)"
+              echo "cgroup cpu.max: $(cat /sys/fs/cgroup/cpu.max 2>/dev/null)"
+              echo "cgroup mem.max: $(cat /sys/fs/cgroup/memory.max 2>/dev/null)"
+              df -h /dev/shm /workspace /data 2>/dev/null
+
+              line "env"
+              if [ -f /workspace/envs/mmdl.env ]; then
+                source /workspace/envs/mmdl.env
+                echo "python: $(python -V 2>&1) at $(command -v python)"
+              else
+                echo "/workspace/envs/mmdl.env missing - run bootstrap_env.sh first"
+                exit 1
+              fi
+
+              line "torch"
+              python - <<'PY'
+              import torch
+              print("torch:", torch.__version__, "| CUDA build:", torch.version.cuda)
+              print("cuda available:", torch.cuda.is_available())
+              print("device count  :", torch.cuda.device_count())
+              for i in range(torch.cuda.device_count()):
+                  p = torch.cuda.get_device_properties(i)
+                  print(f"  gpu{i}: {p.name} {p.total_memory/2**30:.1f}GiB sm_{p.major}{p.minor}")
+              if torch.cuda.is_available():
+                  print("bf16 supported:", torch.cuda.is_bf16_supported())
+              PY
+
+              line "qwen3-vl module names (the point of this job)"
+              MODEL_DIR="${MODEL_DIR}" python - <<'PY'
+              import os, json, collections, re
+              md = os.environ["MODEL_DIR"]
+              cfg_path = os.path.join(md, "config.json")
+              if not os.path.isdir(md):
+                  print(f"model not at {md}; download it first. Skipping.")
+                  raise SystemExit(0)
+
+              cfg = json.load(open(cfg_path, encoding="utf-8"))
+              vis = cfg.get("vision_config", {})
+              # DECISIONS.md G3: check whether the encoder really is SigLIP-2.
+              print("vision_config keys:", sorted(vis)[:20])
+              for k in ("model_type", "depth", "num_hidden_layers", "hidden_size",
+                        "num_heads", "num_attention_heads", "deepstack_visual_indexes"):
+                  if k in vis:
+                      print(f"  vision.{k} = {vis[k]}")
+
+              import torch
+              from transformers import AutoModel, AutoConfig
+              try:
+                  from transformers import Qwen3VLForConditionalGeneration as Cls
+              except Exception:
+                  Cls = None
+              cfg_obj = AutoConfig.from_pretrained(md)
+              # meta device: structure only, no weights read, no GPU memory used.
+              # Construct from the config object directly - `from_config` is not a
+              # public classmethod on the model class (only AutoModel has it).
+              with torch.device("meta"):
+                  model = Cls(cfg_obj) if Cls is not None else AutoModel.from_config(cfg_obj)
+
+              names = [n for n, _ in model.named_modules()]
+              print("total modules:", len(names))
+
+              def show(title, pred, limit=24):
+                  hit = [n for n in names if pred(n)]
+                  print(f"\n-- {title} ({len(hit)}) --")
+                  for n in hit[:limit]:
+                      print("   ", n)
+                  if len(hit) > limit:
+                      print(f"    ... and {len(hit)-limit} more")
+
+              show("vision attention/proj modules",
+                   lambda n: ("visual" in n or "vision" in n)
+                             and re.search(r"(qkv|q_proj|k_proj|v_proj|o_proj|proj)$", n))
+              show("merger / deepstack / connector",
+                   lambda n: re.search(r"(merger|deepstack|connector)", n))
+
+              blocks = {m.group(1) for n in names
+                        for m in [re.match(r"^(.*\.(?:blocks|layers))\.\d+$", n)] if m}
+              print("\n-- block containers --")
+              for b in sorted(blocks):
+                  idx = [int(n.rsplit(".", 1)[1]) for n in names
+                         if n.startswith(b + ".") and n.rsplit(".", 1)[1].isdigit()]
+                  if idx:
+                      print(f"    {b}: {max(idx)+1} blocks (0..{max(idx)})")
+
+              # The decisive check for DECISIONS.md section 5.
+              leaf = collections.Counter(n.rsplit(".", 1)[-1] for n in names)
+              hard = ["q_proj", "k_proj", "v_proj", "o_proj"]
+              vis_hits = [n for n in names
+                          if n.rsplit(".", 1)[-1] in hard and ("visual" in n or "vision" in n)]
+              print("\n==> upstream hardcodes target_modules =", hard)
+              print("==> vision modules matching that list:", len(vis_hits))
+              if vis_hits:
+                  print("!!! LoRA would wrap the VISION TOWER too.")
+                  print("!!! The 'language only' premise of arms A and B is FALSE as written.")
+                  for n in vis_hits[:8]:
+                      print("     ", n)
+              else:
+                  print("OK: vision tower uses different names; arms A/B stay language-only.")
+              print("\nleaf name counts (top 15):", leaf.most_common(15))
+              PY
+
+              line "done"
+          env:
+            - name: MODEL_DIR
+              value: "${MODEL_DIR}"
+            - name: PYTHONUNBUFFERED
+              value: "1"
+          resources:
+            limits:
+              cpu: "${CPU_LIMIT}"
+              memory: ${MEM}
+              nvidia.com/gpu: "${GPU_COUNT}"
+            requests:
+              cpu: "500m"
+              memory: ${MEM}
+              nvidia.com/gpu: "${GPU_COUNT}"
+          volumeMounts:
+            - name: workspace
+              mountPath: /workspace
+            - name: data
+              mountPath: /data
+            - name: dshm
+              mountPath: /dev/shm
+      volumes:
+        - name: workspace
+          persistentVolumeClaim:
+            claimName: ${PVC_NAME}
+        - name: data
+          persistentVolumeClaim:
+            claimName: data
+        - name: dshm
+          emptyDir:
+            medium: Memory
+            sizeLimit: 16Gi

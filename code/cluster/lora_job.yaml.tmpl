@@ -1,0 +1,124 @@
+# LoRA 학습 Job 템플릿 — 연구실 H200 클러스터 (NKS, namespace p-test2)
+#
+# 값의 출처는 docs/h200_k8s_setup.md 입니다. 추측값이 아니라 실제로 돌아간 Job 설정에서
+# 가져왔습니다. 바꾸기 전에 그 문서를 먼저 읽으세요.
+#
+# 이 템플릿은 git에 올라갑니다. 렌더된 결과는 .gitignore의 *.yaml 규칙으로 제외되므로
+# 렌더된 매니페스트에는 키가 들어가지 않습니다 - Secret을 참조만 합니다.
+#
+# 렌더 및 제출:
+#   export JOB_NAME=lora-a-$(date +%m%d-%H%M)
+#   bash code/cluster/setup_secrets.sh   # 키는 Secret으로 (평문 주입 안 함)
+#   envsubst < code/cluster/lora_job.yaml.tmpl > code/cluster/rendered/$JOB_NAME.yaml
+#   kubectl --kubeconfig reality-lab.yaml apply -f code/cluster/rendered/$JOB_NAME.yaml
+#
+# 모니터링:
+#   kubectl logs -n p-test2 -l job-name=$JOB_NAME --prefix=true -f
+#   kubectl get pods -n p-test2
+#
+# 필수: JOB_NAME        (키는 Secret에서 읽습니다 - setup_secrets.sh 참조)
+# 선택: NAMESPACE(p-test2) PVC_NAME(yeunsuh-workspace-1) ENV_FILE(/workspace/envs/mmdl.env)
+#       GPU_COUNT(1) CPU_LIMIT(8) MEM(32Gi) ZONE(private-h200-realitylab-0)
+#       IMAGE(kubeflow-jupyter:2.7.0) OMP_THREADS(8)
+# 필수(학습): ARM  SEED  SFT_SET   — configs/arms/<ARM>.toml 과 training_data/sft/<SFT_SET>/
+#
+# PVC 이름 주의: docs/h200_k8s_setup.md의 `eunwoo-workspace-1`은 다른 사람 볼륨입니다.
+# 이 계정의 볼륨은 `yeunsuh-workspace-1`이고, `/data`는 공용 `data` PVC입니다
+# (2026-11-18 `kubectl get pvc -n p-test2`로 확인).
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: ${JOB_NAME}
+  namespace: ${NAMESPACE}
+  labels:
+    app: mmdl
+    role: lora-train
+spec:
+  backoffLimit: 0            # 죽은 실행은 조용히 재시도하지 말고 들여다봐야 함
+  ttlSecondsAfterFinished: 604800
+  template:
+    metadata:
+      labels:
+        app: mmdl
+        role: lora-train
+        # 아래 3개는 이 클러스터에서 필수. 빠지면 스케줄링되지 않음.
+        mlx.navercorp.com/zone: ${ZONE}
+        management.mlx.navercorp.com/project: test2
+        management.mlx.navercorp.com/workspace: realitylab
+      annotations:
+        mlx.navercorp.com/zone: ${ZONE}
+    spec:
+      restartPolicy: Never
+      # 노드 고정. 이 템플릿을 직접 렌더하지 마세요 —
+      # code/cluster/submit_job.sh 가 --node 없이는 제출을 거부합니다.
+      nodeSelector:
+        kubernetes.io/hostname: ${NODE_NAME}
+      containers:
+        - name: pytorch
+          image: ${IMAGE}
+          workingDir: /workspace/MMDL
+          command:
+            - bash
+            - -c
+            - |
+              set -euo pipefail
+              nvidia-smi
+              # launch.sh sources ${ENV_FILE}, picks up torchrun when GPU_COUNT > 1,
+              # and refuses to run if the global batch would drift from 32.
+              bash code/train/launch.sh \
+                --arm  "${ARM}" \
+                --seed "${SEED}" \
+                --gpus "${GPU_COUNT}" \
+                --annotation "/workspace/MMDL/training_data/sft/${SFT_SET}/train.jsonl" \
+                --image-root "/workspace/MMDL/training_data/cluster_upload" \
+                --out  "/workspace/checkpoints/${JOB_NAME}"
+          env:
+            # Read from a Secret, never interpolated into this manifest.
+            # Created by code/cluster/setup_secrets.sh from secrets/wandb_api_key.
+            # optional: true means a job still runs when the Secret is absent.
+            - name: WANDB_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: ${WANDB_SECRET}
+                  key: WANDB_API_KEY
+                  optional: true
+            - name: WANDB_RUN_NAME
+              value: "${JOB_NAME}"
+            - name: HF_HOME
+              value: /workspace/.cache/hf     # 컨테이너 레이어에 두면 pod 재시작 시 소멸
+            - name: PYTHONUNBUFFERED
+              value: "1"
+            - name: TOKENIZERS_PARALLELISM
+              value: "false"
+            # pod는 노드의 128코어를 보지만 실제 할당은 cpu limit뿐입니다.
+            # 안 박으면 torch/OpenMP가 128스레드를 띄워 오버서브스크립션이 납니다.
+            - name: OMP_NUM_THREADS
+              value: "${OMP_THREADS}"
+          resources:
+            # limit을 비우면 여러 pod가 동시에 뜰 때 OOMKilled (docs/h200_k8s_setup.md §4)
+            limits:
+              cpu: "${CPU_LIMIT}"
+              memory: ${MEM}
+              nvidia.com/gpu: "${GPU_COUNT}"
+            requests:
+              cpu: "500m"
+              memory: ${MEM}
+              nvidia.com/gpu: "${GPU_COUNT}"
+          volumeMounts:
+            - name: workspace
+              mountPath: /workspace
+            - name: data
+              mountPath: /data               # 공용 20TB PVC
+            - name: dshm
+              mountPath: /dev/shm            # dataloader worker용. 기본 64MB면 멈춤
+      volumes:
+        - name: workspace
+          persistentVolumeClaim:
+            claimName: ${PVC_NAME}
+        - name: data
+          persistentVolumeClaim:
+            claimName: data
+        - name: dshm
+          emptyDir:
+            medium: Memory
+            sizeLimit: 16Gi

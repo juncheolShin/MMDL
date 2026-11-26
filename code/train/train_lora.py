@@ -9,7 +9,12 @@ EVAL_DATA_PATH = Path(os.environ.get('DATA_PATH', Path(__file__).resolve().paren
 DEFAULT_MODEL = Path(__file__).resolve().parents[2] / 'models' / 'Qwen3-VL-4B-Instruct'
 UPSTREAM_COMMIT = '96588727e44c78b25ba03ea03b8e12f7e64fd0da'
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from configuration import DEFAULT_CONFIG, TRAINING_TYPES, file_sha256, load_section  # noqa: E402
+# mmdl_trainable_spec lives next to this file; the patched upstream LoRA branch
+# imports it by bare name, so this directory has to be importable.
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from configuration import (DEFAULT_CONFIG, TRAINABLE_TYPES, TRAINING_TYPES,  # noqa: E402
+                           file_sha256, load_section)
+from mmdl_trainable_spec import SPEC_ENV, build_target_regex  # noqa: E402
 
 
 def within(path, root):
@@ -71,12 +76,24 @@ def main():
     parser.add_argument('--image-root', type=Path, required=True)
     parser.add_argument('--output-dir', type=Path, required=True)
     parser.add_argument('--model', type=Path, default=DEFAULT_MODEL)
-    parser.add_argument('--config', type=Path, default=DEFAULT_CONFIG)
+    parser.add_argument('--config', type=Path, default=DEFAULT_CONFIG,
+                        help='TOML with [training] and [trainable]; see configs/arms/')
     parser.add_argument('--validate-only', action='store_true')
     args = parser.parse_args()
     training = load_section(args.config, 'training', TRAINING_TYPES)
+    trainable = load_section(args.config, 'trainable', TRAINABLE_TYPES)
     for key, value in training.items():
         setattr(args, key, value)
+    # launch.sh passes the seed this way so one arm config serves all three runs
+    # instead of needing a copy per seed.
+    override = os.environ.get('MMDL_SEED_OVERRIDE')
+    if override:
+        args.seed = int(override)
+        training = dict(training, seed=args.seed)
+    # Fail here rather than inside the patched upstream branch, where a bad
+    # target set would only surface after the model had been loaded.
+    if build_target_regex(trainable) is None and not trainable['train_adapters']:
+        parser.error(f'{args.config} [trainable]: nothing would be trained')
     count = validate_data(args.annotation, args.image_root)
     print(f'validated {count} non-benchmark training examples')
     if args.validate_only:
@@ -107,8 +124,14 @@ def main():
     }
     from qwenvl.train.train_qwen import train
 
+    # The patched LoRA branch takes no arguments, so the spec travels by env var.
+    os.environ[SPEC_ENV] = json.dumps(trainable)
+
     (output / 'mmdl_training_config.json').write_text(json.dumps({
         'annotation_sha256': file_sha256(args.annotation), 'training_examples': count,
+        'trainable': trainable, 'seed': args.seed,
+        'gradient_checkpointing': args.gradient_checkpointing,
+        'dataloader_num_workers': args.dataloader_num_workers,
         'model': str(args.model), 'qwen_training_commit': UPSTREAM_COMMIT,
         'epochs': args.epochs, 'learning_rate': args.learning_rate,
         'gradient_accumulation_steps': args.gradient_accumulation_steps,
@@ -127,13 +150,17 @@ def main():
         '--lora_alpha', str(args.lora_alpha), '--lora_dropout', str(args.lora_dropout),
         '--per_device_train_batch_size', str(args.per_device_train_batch_size),
         '--gradient_accumulation_steps', str(args.gradient_accumulation_steps),
-        '--gradient_checkpointing', 'True', '--learning_rate', str(args.learning_rate),
+        '--gradient_checkpointing', str(args.gradient_checkpointing),
+        '--learning_rate', str(args.learning_rate),
         '--num_train_epochs', str(args.epochs), '--max_steps', str(args.max_steps),
         '--min_pixels', str(args.min_pixels), '--max_pixels', str(args.max_pixels),
         '--model_max_length', str(args.model_max_length),
         '--save_strategy', 'epoch', '--save_total_limit', '1',
-        '--dataloader_num_workers', '0', '--remove_unused_columns', 'False',
-        '--report_to', 'none', '--logging_steps', '1',
+        '--dataloader_num_workers', str(args.dataloader_num_workers),
+        '--remove_unused_columns', 'False',
+        # seed was missing entirely, so every run silently used HF's default 42
+        '--seed', str(args.seed), '--data_seed', str(args.seed),
+        '--report_to', os.environ.get('MMDL_REPORT_TO', 'none'), '--logging_steps', '1',
     ]
     train(attn_implementation='sdpa')
 

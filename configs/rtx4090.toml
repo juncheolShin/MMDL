@@ -27,3 +27,15 @@ max_steps = -1
 min_pixels = 65536
 max_pixels = 524288
 model_max_length = 2048
+
+# Added 2026-11-26. code/train/train_lora.py now passes these three to the
+# upstream trainer on every run, so configuration.py requires them. The values
+# below are what this config's runs were ALREADY getting implicitly, so nothing
+# about the RTX 4090 baseline changes:
+#   seed 42 was HuggingFace's default while the flag went unpassed
+#   the other two are the upstream TrainingArguments defaults
+# A 24GB card that OOMs should set gradient_checkpointing = true (about 30%
+# slower); the H200 arm configs in configs/arms/ keep it false on purpose.
+seed = 42
+gradient_checkpointing = false
+dataloader_num_workers = 0

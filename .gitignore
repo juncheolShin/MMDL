@@ -1,17 +1,43 @@
 # Downloaded assets and local training data/checkpoints.
-data/
-models/
-training_data/
-checkpoints/
+# Root-anchored on purpose: an unanchored "data/" also swallows code/data/,
+# which is source, not data.
+/data/
+/models/
+/training_data/
+/checkpoints/
 
 # Evaluation outputs stay local.
-results/
+/results/
 
-logs/
-_workspace/
+/logs/
+/_workspace/
 __pycache__/
 *.pyc
 .pytest_cache/
 *.part
 
 base_greed*
+
+# Cache redirect target, so nothing lands on C:. See configs/env.ps1 and configs/env.sh.
+/.cache/
+
+.venv/
+
+# Cluster credentials: kubeconfigs and rendered Job manifests carry secrets.
+# Templates are tracked as *.yaml.tmpl, which this pattern does not match.
+*.yaml
+
+# push_to_pod.sh local staging
+/.push_staging/
+
+# Local key files; never committed. See secrets/README.md
+/secrets/
+/.secret_staging/
+
+# GeoQA side analysis stays local (training_data/ and results/ are already ignored above).
+/reports/
+/code/data/prepare_geoqa.py
+/docs/
+
+DECISIONS.md
+draft.md

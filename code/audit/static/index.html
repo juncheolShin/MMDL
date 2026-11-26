@@ -1,0 +1,437 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MMDL 감사</title>
+<style>
+  :root {
+    --bg: #f6f7f9; --panel: #ffffff; --ink: #16181d; --muted: #6b7280;
+    --line: #e3e6ea; --accent: #2f6df6;
+    --ok: #0f8a4f; --ok-bg: #e6f5ed;
+    --warn: #a86a00; --warn-bg: #fdf1dd;
+    --bad: #c0392b; --bad-bg: #fdecea;
+    --shadow: 0 1px 2px rgba(16,24,40,.06), 0 1px 3px rgba(16,24,40,.08);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #15171c; --panel: #1d2026; --ink: #e8eaed; --muted: #9aa1ab;
+      --line: #2c313a; --accent: #6b9bff;
+      --ok: #52c98a; --ok-bg: #16311f;
+      --warn: #e0a640; --warn-bg: #352a14;
+      --bad: #f0786a; --bad-bg: #38201d;
+      --shadow: none;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #15171c; --panel: #1d2026; --ink: #e8eaed; --muted: #9aa1ab;
+    --line: #2c313a; --accent: #6b9bff;
+    --ok: #52c98a; --ok-bg: #16311f;
+    --warn: #e0a640; --warn-bg: #352a14;
+    --bad: #f0786a; --bad-bg: #38201d;
+    --shadow: none;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font: 15px/1.6 -apple-system, "Segoe UI", "Malgun Gothic", system-ui, sans-serif;
+  }
+  code, .mono { font-family: ui-monospace, "Cascadia Mono", Consolas, monospace; }
+
+  header {
+    position: sticky; top: 0; z-index: 20; background: var(--panel);
+    border-bottom: 1px solid var(--line); padding: 10px 16px;
+    display: flex; gap: 12px; align-items: center; flex-wrap: wrap;
+  }
+  header h1 { font-size: 15px; margin: 0; font-weight: 650; }
+  header .sub { color: var(--muted); font-size: 12.5px; }
+  select, button, input, textarea {
+    font: inherit; color: inherit; background: var(--panel);
+    border: 1px solid var(--line); border-radius: 8px; padding: 6px 10px;
+  }
+  button { cursor: pointer; }
+  button:hover { border-color: var(--accent); }
+  .spacer { flex: 1 1 auto; }
+
+  .bar { height: 6px; background: var(--line); border-radius: 99px; overflow: hidden;
+         width: 180px; }
+  .bar > i { display: block; height: 100%; background: var(--accent); width: 0; }
+
+  main { max-width: 1500px; margin: 0 auto; padding: 16px; }
+  .grid { display: grid; grid-template-columns: minmax(380px, 46%) 1fr; gap: 16px;
+          align-items: start; }
+  @media (max-width: 1000px) { .grid { grid-template-columns: 1fr; } }
+
+  .card { background: var(--panel); border: 1px solid var(--line);
+          border-radius: 12px; box-shadow: var(--shadow); padding: 14px 16px;
+          margin-bottom: 14px; }
+  .card h3 { margin: 0 0 8px; font-size: 13px; font-weight: 650;
+             letter-spacing: .01em; color: var(--muted); text-transform: none; }
+
+  .imgwrap { position: sticky; top: 64px; }
+  .imgbox { background: #fff; border: 1px solid var(--line); border-radius: 12px;
+            padding: 8px; display: flex; justify-content: center; }
+  .imgbox img { max-width: 100%; max-height: 72vh; object-fit: contain;
+                cursor: zoom-in; border-radius: 6px; }
+  .imgbox.zoom img { max-height: none; cursor: zoom-out; }
+  .imgmeta { color: var(--muted); font-size: 12px; margin-top: 6px;
+             word-break: break-all; }
+
+  .qline { font-size: 17px; font-weight: 600; margin: 0 0 10px; }
+  .opts { list-style: none; padding: 0; margin: 0 0 10px; }
+  .opts li { padding: 4px 10px; border-radius: 7px; border: 1px solid transparent; }
+  .opts li.gold { background: var(--ok-bg); border-color: var(--ok); font-weight: 600; }
+  .gold-pill { display: inline-block; background: var(--ok-bg); color: var(--ok);
+               border: 1px solid var(--ok); border-radius: 7px; padding: 2px 9px;
+               font-weight: 650; }
+
+  .badges { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; }
+  .badge { font-size: 12px; padding: 2px 9px; border-radius: 99px;
+           border: 1px solid var(--line); color: var(--muted); }
+  .badge.ok { background: var(--ok-bg); color: var(--ok); border-color: var(--ok); }
+  .badge.warn { background: var(--warn-bg); color: var(--warn); border-color: var(--warn); }
+  .badge.bad { background: var(--bad-bg); color: var(--bad); border-color: var(--bad); }
+
+  .lines { margin: 0; padding: 0; list-style: none; }
+  .lines li { padding: 5px 9px; border-left: 3px solid var(--line);
+              margin-bottom: 4px; background: var(--bg); border-radius: 0 6px 6px 0;
+              font-family: ui-monospace, Consolas, monospace; font-size: 13px; }
+  .note { color: var(--muted); font-size: 12.5px; margin-top: 8px; }
+
+  table { border-collapse: collapse; width: 100%; font-size: 13px; }
+  th, td { border: 1px solid var(--line); padding: 4px 8px; text-align: left; }
+  th { background: var(--bg); font-weight: 600; }
+  .scroll { max-height: 320px; overflow: auto; border-radius: 8px; }
+
+  .kv { display: grid; grid-template-columns: max-content 1fr; gap: 4px 14px;
+        font-size: 13.5px; }
+  .kv dt { color: var(--muted); }
+  .kv dd { margin: 0; }
+
+  .choices { display: flex; gap: 10px; flex-wrap: wrap; }
+  .choice { flex: 1 1 200px; text-align: left; padding: 10px 12px; border-radius: 10px;
+            border: 1.5px solid var(--line); background: var(--panel); }
+  .choice b { display: block; font-size: 15px; margin-bottom: 2px; }
+  .choice span { color: var(--muted); font-size: 12.5px; display: block; }
+  .choice kbd { float: right; border: 1px solid var(--line); border-radius: 5px;
+                padding: 0 6px; font-size: 12px; color: var(--muted); }
+  .choice.sel.ok { border-color: var(--ok); background: var(--ok-bg); }
+  .choice.sel.warn { border-color: var(--warn); background: var(--warn-bg); }
+  .choice.sel.bad { border-color: var(--bad); background: var(--bad-bg); }
+  .choice.sel.neutral { border-color: var(--accent); }
+
+  textarea { width: 100%; min-height: 58px; resize: vertical; }
+  .nav { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .hint { color: var(--muted); font-size: 12.5px; }
+  .md { font-size: 13.5px; }
+  .md b { color: var(--ink); }
+  dialog { border: 1px solid var(--line); border-radius: 12px; background: var(--panel);
+           color: var(--ink); max-width: 760px; width: 92%; padding: 18px; }
+  dialog::backdrop { background: rgba(0,0,0,.45); }
+  .empty { text-align: center; color: var(--muted); padding: 60px 20px; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>MMDL 감사</h1>
+  <select id="queueSel"></select>
+  <span class="sub" id="queueSub"></span>
+  <div class="spacer"></div>
+  <span class="sub" id="progText">0 / 0</span>
+  <div class="bar"><i id="progBar"></i></div>
+  <button id="btnUnlabeled" title="아직 판정하지 않은 첫 행으로">미판정으로 ↵</button>
+  <button id="btnHelp" title="도움말">?</button>
+  <button id="btnSummary">집계</button>
+</header>
+
+<main>
+  <div id="root"></div>
+</main>
+
+<dialog id="dlg"><div id="dlgBody"></div>
+  <div style="text-align:right;margin-top:14px">
+    <button onclick="document.getElementById('dlg').close()">닫기</button>
+  </div>
+</dialog>
+
+<script>
+"use strict";
+
+const state = { queue: null, idx: 0, labels: {}, saving: 0 };
+const $ = (id) => document.getElementById(id);
+
+const esc = (s) => String(s == null ? "" : s)
+  .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+// A deliberately tiny markdown: **bold** and paragraph breaks. The instruction
+// text is ours, not user input, but it is escaped first all the same.
+function md(text) {
+  return esc(text)
+    .split(/\n\n+/)
+    .map(p => "<p>" + p.replace(/\*\*(.+?)\*\*/g, "<b>$1</b>")
+                       .replace(/\n/g, "<br>") + "</p>")
+    .join("");
+}
+
+async function api(path, opts) {
+  const res = await fetch(path, opts);
+  if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || res.statusText);
+  return res.json();
+}
+
+// ---------------------------------------------------------------- queues
+
+async function loadQueueList() {
+  const queues = await api("/api/queues");
+  const sel = $("queueSel");
+  sel.innerHTML = queues.map(q =>
+    `<option value="${esc(q.name)}">${esc(q.title)} — ${q.labeled}/${q.total}</option>`
+  ).join("");
+  if (!queues.length) {
+    $("root").innerHTML = '<div class="empty">큐가 없습니다. 먼저 <code>python code/audit/build_queues.py</code></div>';
+    return;
+  }
+  const saved = localStorage.getItem("mmdl.queue");
+  if (saved && queues.some(q => q.name === saved)) sel.value = saved;
+  await loadQueue(sel.value);
+}
+
+async function loadQueue(name) {
+  state.queue = await api("/api/queue/" + encodeURIComponent(name));
+  state.labels = state.queue.labels || {};
+  try { localStorage.setItem("mmdl.queue", name); } catch (e) {}
+  $("queueSub").textContent = state.queue.subtitle || "";
+  state.idx = firstUnlabeled();
+  render();
+}
+
+function firstUnlabeled() {
+  const items = state.queue.items;
+  for (let i = 0; i < items.length; i++) {
+    if (!(state.labels[items[i].id] || {}).choice) return i;
+  }
+  return 0;
+}
+
+// ---------------------------------------------------------------- render
+
+function renderPanel(p) {
+  let body = "";
+  if (p.kind === "lines") {
+    body = '<ul class="lines">' + (p.rows.length ? p.rows : ["(없음)"])
+      .map(r => "<li>" + esc(r) + "</li>").join("") + "</ul>";
+  } else if (p.kind === "table") {
+    body = '<div class="scroll"><table><thead><tr>' +
+      p.header.map(h => "<th>" + esc(h) + "</th>").join("") +
+      "</tr></thead><tbody>" +
+      p.rows.map(r => "<tr>" + r.map(c => "<td>" + esc(c) + "</td>").join("") + "</tr>").join("") +
+      "</tbody></table></div>";
+  } else if (p.kind === "kv") {
+    body = '<dl class="kv">' + p.rows.map(([k, v]) =>
+      "<dt>" + esc(k) + "</dt><dd>" + esc(v) + "</dd>").join("") + "</dl>";
+  }
+  return '<div class="card"><h3>' + esc(p.title) + "</h3>" + body +
+    (p.note ? '<div class="note">' + esc(p.note) + "</div>" : "") + "</div>";
+}
+
+function renderChoiceRow(choices, selected, group) {
+  return '<div class="choices">' + choices.map(c =>
+    `<button class="choice ${esc(c.tone || "neutral")} ${selected === c.key ? "sel" : ""}"
+             data-group="${esc(group)}" data-key="${esc(c.key)}">
+       <kbd>${esc(c.key.toUpperCase())}</kbd>
+       <b>${esc(c.label)}</b>${c.hint ? "<span>" + esc(c.hint) + "</span>" : ""}
+     </button>`).join("") + "</div>";
+}
+
+function render() {
+  const q = state.queue;
+  if (!q || !q.items.length) {
+    $("root").innerHTML = '<div class="empty">이 큐에 항목이 없습니다.</div>';
+    return;
+  }
+  const i = Math.max(0, Math.min(state.idx, q.items.length - 1));
+  state.idx = i;
+  const it = q.items[i];
+  const lab = state.labels[it.id] || {};
+
+  const done = Object.values(state.labels).filter(v => v.choice).length;
+  $("progText").textContent = `${done} / ${q.items.length}  ·  지금 ${i + 1}번째`;
+  $("progBar").style.width = (100 * done / q.items.length) + "%";
+
+  const opts = (it.options || []);
+  const optsHtml = opts.length
+    ? '<ul class="opts">' + opts.map(o =>
+        `<li class="${String(o) === String(it.gold) ? "gold" : ""}">${esc(o)}</li>`).join("") + "</ul>"
+    : `<div style="margin-bottom:10px">정답 <span class="gold-pill">${esc(it.gold)}</span></div>`;
+
+  const img = it.image
+    ? `<div class="imgbox" id="imgbox"><img src="/img?p=${encodeURIComponent(it.image)}"
+         alt="" onerror="this.replaceWith(Object.assign(document.createElement('div'),
+         {className:'empty',textContent:'이미지를 찾을 수 없습니다'}))"></div>
+       <div class="imgmeta mono">${esc(it.image)}</div>`
+    : '<div class="imgbox"><div class="empty">이미지 경로가 없습니다</div></div>';
+
+  const extras = (q.extra_questions || []).map(x =>
+    '<div class="card"><h3>' + esc(x.label) + "</h3>" +
+    (x.hint ? '<div class="note" style="margin:0 0 8px">' + esc(x.hint) + "</div>" : "") +
+    renderChoiceRow(x.choices, (lab.extra || {})[x.name], "extra:" + x.name) +
+    "</div>").join("");
+
+  $("root").innerHTML = `
+    <div class="grid">
+      <div class="imgwrap">${img}</div>
+      <div>
+        <div class="card">
+          <div class="badges">
+            <span class="badge mono">${esc(it.id)}</span>
+            ${(it.badges || []).map(b =>
+              `<span class="badge ${esc(b.tone || "")}">${esc(b.text)}</span>`).join("")}
+          </div>
+          <p class="qline">${esc(it.question)}</p>
+          ${optsHtml}
+        </div>
+        ${(it.panels || []).map(renderPanel).join("")}
+        <div class="card">
+          <h3>판정</h3>
+          ${renderChoiceRow(q.choices, lab.choice, "choice")}
+        </div>
+        ${extras}
+        <div class="card">
+          <h3>메모 (선택)</h3>
+          <textarea id="note" placeholder="나중에 볼 메모">${esc(lab.note || "")}</textarea>
+          <div class="nav" style="margin-top:10px">
+            <button id="prev">← 이전</button>
+            <button id="next">다음 →</button>
+            <span class="spacer"></span>
+            <span class="hint">단축키: 판정 ${q.choices.map(c => c.key.toUpperCase()).join("/")}
+              · 이동 ←/→ · 미판정 Enter · 도움말 ?</span>
+          </div>
+        </div>
+      </div>
+    </div>`;
+
+  $("imgbox") && $("imgbox").addEventListener("click", () =>
+    $("imgbox").classList.toggle("zoom"));
+  $("prev").onclick = () => { state.idx--; render(); };
+  $("next").onclick = () => { state.idx++; render(); };
+  $("note").addEventListener("change", (e) => save({ note: e.target.value }));
+  document.querySelectorAll(".choice").forEach(btn => {
+    btn.onclick = () => pick(btn.dataset.group, btn.dataset.key);
+  });
+}
+
+// ---------------------------------------------------------------- saving
+
+async function save(patch) {
+  const it = state.queue.items[state.idx];
+  const prev = state.labels[it.id] || {};
+  const body = { queue: state.queue.name, id: it.id, ...patch };
+  state.labels[it.id] = { ...prev, ...patch };
+  try {
+    await api("/api/label", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+  } catch (e) {
+    state.labels[it.id] = prev;          // put it back; the UI must not lie
+    alert("저장 실패: " + e.message);
+  }
+}
+
+function pick(group, key) {
+  const it = state.queue.items[state.idx];
+  const lab = state.labels[it.id] || {};
+  if (group === "choice") {
+    const advance = lab.choice !== key;
+    save({ choice: key }).then(() => {
+      render();
+      // Advancing only on a NEW choice means correcting a row keeps you on it.
+      if (advance && state.idx < state.queue.items.length - 1) {
+        state.idx++; render();
+      }
+    });
+  } else {
+    const name = group.slice("extra:".length);
+    const extra = { ...(lab.extra || {}), [name]: key };
+    save({ extra }).then(render);
+  }
+}
+
+// ---------------------------------------------------------------- keyboard
+
+document.addEventListener("keydown", (e) => {
+  if (e.target.tagName === "TEXTAREA" || e.target.tagName === "INPUT") return;
+  if (e.metaKey || e.ctrlKey || e.altKey) return;
+  const q = state.queue;
+  if (!q) return;
+  const k = e.key.toLowerCase();
+
+  if (e.key === "ArrowLeft") { state.idx--; render(); return e.preventDefault(); }
+  if (e.key === "ArrowRight") { state.idx++; render(); return e.preventDefault(); }
+  if (e.key === "Enter") { state.idx = firstUnlabeled(); render(); return e.preventDefault(); }
+  if (k === "?" || e.key === "?") { showHelp(); return e.preventDefault(); }
+
+  if (q.choices.some(c => c.key === k)) { pick("choice", k); return e.preventDefault(); }
+  for (const x of (q.extra_questions || [])) {
+    if (x.choices.some(c => c.key === k)) { pick("extra:" + x.name, k); return e.preventDefault(); }
+  }
+});
+
+// ---------------------------------------------------------------- dialogs
+
+function showHelp() {
+  const q = state.queue;
+  $("dlgBody").innerHTML =
+    "<h2 style='margin-top:0'>" + esc(q.title) + "</h2>" +
+    '<div class="md">' + md(q.instructions || "") + "</div>" +
+    "<h3>선택지</h3><div class='md'>" +
+    q.choices.map(c => `<p><b>(${esc(c.key)}) ${esc(c.label)}</b> — ${esc(c.hint || "")}</p>`).join("") +
+    (q.extra_questions || []).map(x =>
+      "<p><b>" + esc(x.label) + "</b><br>" +
+      x.choices.map(c => `(${esc(c.key)}) ${esc(c.label)}`).join(" · ") + "</p>").join("") +
+    "</div><h3>단축키</h3><div class='md'><p>" +
+    "판정 " + q.choices.map(c => c.key.toUpperCase()).join(" / ") +
+    " · 이동 ← → · 미판정으로 Enter · 이미지 클릭하면 확대</p>" +
+    "<p>모든 선택은 누르는 즉시 디스크에 저장됩니다. 창을 닫아도 잃지 않습니다.</p></div>";
+  $("dlg").showModal();
+}
+
+async function showSummary() {
+  const s = await api("/api/summary/" + encodeURIComponent(state.queue.name));
+  const q = state.queue;
+  const label = (k) => (q.choices.find(c => c.key === k) || {}).label || k;
+  const rows = Object.entries(s.counts).sort((a, b) => b[1] - a[1]);
+  const pct = (n) => s.labeled ? (100 * n / s.labeled).toFixed(0) + "%" : "–";
+  let html = "<h2 style='margin-top:0'>집계 — " + esc(q.title) + "</h2>" +
+    `<p class="hint">${s.labeled} / ${s.total} 판정 완료</p>` +
+    "<table><thead><tr><th>선택</th><th>건수</th><th>비율</th></tr></thead><tbody>" +
+    rows.map(([k, n]) => `<tr><td>(${esc(k)}) ${esc(label(k))}</td><td>${n}</td><td>${pct(n)}</td></tr>`).join("") +
+    "</tbody></table>";
+  for (const [name, counts] of Object.entries(s.extra_counts || {})) {
+    const x = (q.extra_questions || []).find(e => e.name === name) || { label: name, choices: [] };
+    html += "<h3>" + esc(x.label) + "</h3><table><tbody>" +
+      Object.entries(counts).map(([k, n]) => {
+        const lb = (x.choices.find(c => c.key === k) || {}).label || k;
+        return `<tr><td>(${esc(k)}) ${esc(lb)}</td><td>${n}</td></tr>`;
+      }).join("") + "</tbody></table>";
+  }
+  html += `<p class="hint" style="margin-top:14px">원본:
+    <code>training_data/evidence/audit_queues/${esc(q.name)}.labels.json</code></p>`;
+  $("dlgBody").innerHTML = html;
+  $("dlg").showModal();
+}
+
+// ---------------------------------------------------------------- boot
+
+$("queueSel").onchange = (e) => loadQueue(e.target.value);
+$("btnUnlabeled").onclick = () => { state.idx = firstUnlabeled(); render(); };
+$("btnHelp").onclick = showHelp;
+$("btnSummary").onclick = showSummary;
+
+loadQueueList().catch(e => {
+  $("root").innerHTML = '<div class="empty">큐를 불러오지 못했습니다: ' + esc(e.message) + "</div>";
+});
+</script>
+</body>
+</html>
