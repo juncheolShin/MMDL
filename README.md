@@ -8,7 +8,7 @@ ICoT 실험의 발표 결과와 재현 명령은 [ICoT 보고서](icot/README.md
 
 팀 ICoT에서 출발해 vision encoder·merger·attention LoRA를 함께 학습한 후속 실험의 [결과 보고서](experiments/icot_retention/REPORT.md)와 [모델 복원·재학습 방법](experiments/icot_retention/README.md)을 별도로 제공합니다.
 
-정답만 가르친 지도와 증거·풀이·정답을 가르친 지도를 같은 데이터·같은 step·같은 홀드아웃에서 비교한 증거 지도 실험은 [결과 보고서](experiments/evidence_supervision/REPORT.md) · [데이터 구축](experiments/evidence_supervision/DATA.md) · [재현 안내](experiments/evidence_supervision/README.md)에 정리했습니다. GPU 없이 핵심 주장을 확인하려면 `python experiments/evidence_supervision/make_evidence.py`를 실행합니다.
+정답만 가르친 지도와 증거·풀이·정답을 가르친 지도를 같은 데이터·같은 step·같은 홀드아웃에서 비교한 증거 지도 실험은 [결과 보고서](experiments/evidence_supervision/REPORT.md) · [데이터 구축](experiments/evidence_supervision/DATA.md) · [재현 안내](experiments/evidence_supervision/README.md)에 정리했습니다. 각 arm이 학습하는 모듈과 base 모델 구조는 [모델 구조](experiments/evidence_supervision/MODEL.md)에 있습니다(실측 파라미터 수로 검산). GPU 없이 핵심 주장을 확인하려면 `python experiments/evidence_supervision/make_evidence.py`를 실행합니다.
 
 ## 저장소 구성
 

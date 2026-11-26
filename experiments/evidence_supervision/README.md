@@ -1,6 +1,6 @@
 # 증거 지도 실험 · 재현 안내
 
-정답만 가르친 지도와 증거·풀이·정답을 가르친 지도를 같은 데이터·같은 step·같은 홀드아웃에서 비교한 실험이다. **증거 지도가 정답만 지도를 이긴 측정은 없었다.** 결과와 해석은 [실험 보고서](REPORT.md), 데이터를 어떻게 만들고 무엇으로 검증했는지는 [데이터 구축](DATA.md)에 있다.
+정답만 가르친 지도와 증거·풀이·정답을 가르친 지도를 같은 데이터·같은 step·같은 홀드아웃에서 비교한 실험이다. **증거 지도가 정답만 지도를 이긴 측정은 없었다.** 결과와 해석은 [실험 보고서](REPORT.md), 데이터를 어떻게 만들고 무엇으로 검증했는지는 [데이터 구축](DATA.md), arm이 건드리는 모듈이 무엇인지는 [모델 구조](MODEL.md)에 있다.
 
 아래 명령은 **저장소 루트에서** 실행한다. 결과만 확인하려면 1절, 저장된 예측을 다시 채점하려면 2절, 데이터부터 처음 만들려면 3절을 쓴다.
 
@@ -43,7 +43,12 @@ python experiments/evidence_supervision/official_gap.py
 
 # 파싱 실패로 남아 있는 여지 산정
 python experiments/evidence_supervision/parser_headroom.py
+
+# 팀 ICoT 채점기로 교차 채점 (그들 프로토콜은 추론이 동일, 채점기만 다름)
+python experiments/evidence_supervision/cross_score_icot.py
 ```
+
+교차 채점은 **그들 채점기가 run 디렉터리의 `scores.json`·`per_sample.csv`를 덮어쓰기 때문에** 입력만 임시 디렉터리로 복사해 거기서 돌린다. 우리 런은 `evaluation_data.json`을 저장하지 않았으므로 `predictions.jsonl`의 `answer`와 프롬프트의 `Options:` 블록에서 복원하고, 선택지 글자 연속성·정답 범위·900행 유일성을 검증한 뒤에만 채점한다. 결과는 [REPORT 5.4~5.6](REPORT.md#54-채점기는-하나이고-버전-이력이-있다) — 채점기 버전 이력, 교차 채점 결과, ICoT와의 비교가 유효한 이유.
 
 arm 간 쌍대 비교(McNemar)는 `--run LABEL=PATH`를 실행 수만큼 반복한다.
 
